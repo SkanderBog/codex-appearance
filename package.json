@@ -1,15 +1,16 @@
 {
   "name": "codex-appearance-companion",
-  "version": "0.4.0-alpha.1",
+  "version": "0.4.0-alpha.2",
   "private": true,
   "description": "Unofficial Linux appearance companion for compatible Codex desktop installations",
   "scripts": {
     "start": "./launch.sh",
-    "test": "node test/core.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
+    "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
     "install-desktop": "python3 scripts/install.py",
     "check": "node scripts/check.cjs",
     "format": "prettier --write src scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
     "format:check": "prettier --check src scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
+    "benchmark": "node scripts/benchmark.cjs",
     "doctor": "python3 scripts/doctor.py",
     "release:check": "python3 scripts/release.py --check",
     "release:build": "python3 scripts/release.py",

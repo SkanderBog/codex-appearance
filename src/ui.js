@@ -9,6 +9,7 @@ let data,
   changing = 0,
   editingLookId = null,
   sampleReveal = false;
+let renderedPhoto, renderedLooks;
 function status(text) {
   $('status').textContent = text;
 }
@@ -67,7 +68,7 @@ function render(next, css = true) {
   $('remove-photo').hidden = !s.photo;
   $('match-photo').disabled = !data.photoData;
   if (data.photoData) {
-    $('photo-thumb').src = data.photoData;
+    if (renderedPhoto !== data.photoData) $('photo-thumb').src = data.photoData;
     $('photo-thumb').hidden = false;
     $('drop-label').querySelector('strong').textContent = 'Change photo';
   } else {
@@ -75,6 +76,7 @@ function render(next, css = true) {
     $('photo-thumb').removeAttribute('src');
     $('drop-label').querySelector('strong').textContent = '＋ Choose a photo';
   }
+  renderedPhoto = data.photoData;
   $('sample-alpha').textContent = Math.round((s.enabled ? s.opacity : 1) * 100) + '%';
   $('sample-sidebar').hidden = s.terminalMode && !sampleReveal;
   $('sampleWindow').style.maxWidth = s.contentWidth === 'comfortable' ? '320px' : '100%';
@@ -84,7 +86,8 @@ function render(next, css = true) {
       ' / ' +
       s.backgroundMode[0].toUpperCase() +
       s.backgroundMode.slice(1);
-  if (css) $('sample-style').textContent = data.previewCSS;
+  if (css && $('sample-style').textContent !== data.previewCSS)
+    $('sample-style').textContent = data.previewCSS;
   $('undo').disabled = !data.canUndo;
   $('redo').disabled = !data.canRedo;
   $('safety-note').hidden = !data.layoutRestored;
@@ -156,8 +159,11 @@ function openSave(look = null) {
 }
 function renderLooks() {
   const list = $('looks');
-  list.replaceChildren();
   const query = $('look-search').value.trim().toLocaleLowerCase();
+  const key = JSON.stringify([query, data.looks]);
+  if (renderedLooks === key) return;
+  renderedLooks = key;
+  list.replaceChildren();
   const looks = data.looks.filter((look) =>
     [
       look.name,

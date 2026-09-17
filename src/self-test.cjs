@@ -14,6 +14,7 @@ const {
 } = require('./core.cjs');
 const library = require('./library.cjs');
 const { evaluate } = require('./evaluate.cjs');
+const { installControls, removeControls } = require('./controls.cjs');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function runSelfTest({ control, openPreview, getPreview, notify, nativeImage, dialog }) {
   const original = readSettings(),
@@ -420,6 +421,101 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
     fs.writeFileSync(
       path.join(OUTPUT, 'background-controls.png'),
       (await control.webContents.capturePage()).toPNG(),
+    );
+    const beforeHidden = readSettings();
+    await sleep(200);
+    const previewBefore = await evaluate(
+      preview.webContents,
+      "document.getElementById('companion-appearance-style').textContent",
+    );
+    preview.hide();
+    saveSettings({ ...beforeHidden, fontSize: beforeHidden.fontSize === 26 ? 25 : 26 });
+    notify(readSettings());
+    await sleep(200);
+    const previewHidden = await evaluate(
+      preview.webContents,
+      "document.getElementById('companion-appearance-style').textContent",
+    );
+    preview.show();
+    await sleep(300);
+    const previewShown = await evaluate(
+      preview.webContents,
+      "getComputedStyle(document.querySelector('.terminal')).getPropertyValue('--companion-font-size').trim()",
+    );
+    check(
+      'Hidden preview defers rendering and catches up when shown',
+      previewBefore === previewHidden && previewShown === readSettings().fontSize + 'px',
+    );
+    saveSettings(beforeHidden);
+    notify(beforeHidden);
+
+    const stableUI = await run(`(() => {
+      const first = document.querySelector('.look-card');
+      const observer = new MutationObserver(() => {});
+      observer.observe(document.getElementById('sample-style'), { childList:true });
+      observer.observe(document.getElementById('photo-thumb'), { attributes:true, attributeFilter:['src'] });
+      for (let i=0;i<20;i++) render(data);
+      const writes = observer.takeRecords().length;
+      observer.disconnect();
+      return { writes, sameLook:first === document.querySelector('.look-card') };
+    })()`);
+    check(
+      'Unchanged snapshots preserve the photo, preview style, and saved-look nodes',
+      stableUI.writes === 0 && stableUI.sameLook,
+      stableUI,
+    );
+
+    const observerWork = await evaluate(
+      preview.webContents,
+      `(async () => {
+      const fixture = document.createElement('section');
+      fixture.hidden = true;
+      fixture.innerHTML = '<div class="fixture_ApplicationMenuTopBar_test"></div><aside class="app-shell-left-panel"></aside><div id="stream-fixture"></div>';
+      document.body.append(fixture);
+      ${installControls};
+      const query = document.querySelector, queryAll = document.querySelectorAll;
+      let scans = 0;
+      document.querySelector = function(...args) { scans++; return query.apply(this,args); };
+      document.querySelectorAll = function(...args) { scans++; return queryAll.apply(this,args); };
+      let streamScans, repaired, route, duplicates;
+      try {
+        const stream = fixture.querySelector('#stream-fixture');
+        for (let i=0;i<60;i++) {
+          stream.textContent = String(i);
+          const span = document.createElement('span'); span.textContent = 'fixture'; stream.append(span);
+          await new Promise(resolve => setTimeout(resolve,0));
+        }
+        streamScans = scans;
+        fixture.querySelector('[class*="_ApplicationMenuTopBar_"]').remove();
+        fixture.querySelector('aside').remove();
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = '<div class="fixture_ApplicationMenuTopBar_test"></div><aside class="app-shell-left-panel"></aside><span data-testid="home-icon"></span>';
+        fixture.append(wrapper);
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        repaired = !!wrapper.querySelector('#companion-access') && wrapper.querySelector('aside').dataset.companionPanel === 'sidebar';
+        route = document.documentElement.dataset.companionRoute;
+        duplicates = fixture.querySelectorAll('#companion-access').length;
+      } finally {
+        document.querySelector = query; document.querySelectorAll = queryAll;
+        ${removeControls}
+        fixture.remove();
+      }
+      return { batches:60, streamScans, repaired, route, duplicates,
+        cleaned:!window.__companionObserver && !window.__companionMarkFrame && !document.getElementById('companion-access') };
+    })()`,
+    );
+    check(
+      'Streaming text causes no full-document companion scans',
+      observerWork.streamScans === 0,
+      observerWork,
+    );
+    check(
+      'Structural navigation repairs controls and updates the route',
+      observerWork.repaired &&
+        observerWork.route === 'home' &&
+        observerWork.duplicates === 1 &&
+        observerWork.cleaned,
+      observerWork,
     );
     report.passed = true;
   } catch (error) {

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { applyStyle } = require('./evaluate.cjs');
+const { coalesceUpdates } = require('./updates.cjs');
 const {
   ROOT,
   STATE,
@@ -44,16 +45,22 @@ function makeWindow(options) {
   win.once('ready-to-show', () => win.show());
   return win;
 }
-async function refreshPreview() {
+const previewStyles = new WeakMap();
+const refreshPreview = coalesceUpdates(async () => {
   const win = preview;
-  if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed() || win.isMinimized() || !win.isVisible()) return;
   try {
-    await applyStyle(win.webContents, cssFor(readSettings()));
-    if (!win.isDestroyed()) win.webContents.send('appearance:changed', readSettings());
+    const settings = readSettings();
+    const css = cssFor(settings);
+    if (previewStyles.get(win) !== css) {
+      await applyStyle(win.webContents, css);
+      previewStyles.set(win, css);
+    }
+    if (!win.isDestroyed()) win.webContents.send('appearance:changed', settings);
   } catch (error) {
     if (!win.isDestroyed()) console.error('Preview update failed:', error.message);
   }
-}
+});
 async function openPreview() {
   if (preview && !preview.isDestroyed()) {
     preview.show();
@@ -74,7 +81,10 @@ async function openPreview() {
   preview.on('closed', () => {
     preview = null;
   });
+  preview.on('restore', refreshPreview);
+  preview.on('show', refreshPreview);
   await preview.loadFile(path.join(__dirname, 'preview.html'));
+  previewStyles.delete(preview);
   await refreshPreview();
 }
 function notify(value) {

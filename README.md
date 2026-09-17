@@ -22,13 +22,13 @@ Captured from the Linux companion and its floating preview. The sample text and 
 
 ## Try the alpha
 
-1. Download `codex-appearance-0.4.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.4.0-alpha.2-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.4.0-alpha.1-linux-x64.tar.gz
-   cd codex-appearance-0.4.0-alpha.1-linux-x64
+   tar -xzf codex-appearance-0.4.0-alpha.2-linux-x64.tar.gz
+   cd codex-appearance-0.4.0-alpha.2-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -95,6 +95,8 @@ Styled Codex checks input visibility and pointer reachability, conversation scro
 In styled Codex, **Panels** sits beside the application menus. **Panels**, **Ctrl+B**, or **Ctrl+Alt+F** reveals the sidebar. **Ctrl+Alt+R** disables the layer. The ordinary menus and command menu remain available. Conversation width automatically fits the space beside a pinned summary, including while the panel animates. Close styled Codex and launch ordinary Codex to restore the original native window frame.
 
 **Copy palette for Codex** creates a native dark-theme import string for **Settings → Appearance → Dark theme → Import** on the tested build. Photos, transparency, and sidebar styling require the companion launcher.
+
+For the lightest rendering, use a solid background, set opacity to 100%, enable **Reduce motion**, and close the floating preview when it is not needed. Hidden or minimized previews defer styling until shown again. The companion uses file-change notifications for settings, combines rapid updates, and avoids rescanning the page for ordinary conversation text updates. These changes reduce companion overhead; the installed Codex app still uses its own CPU and memory.
 
 Photo blur affects only the photo. Desktop blur and free rearrangement of Codex panels are not implemented. Transparent-window resizing and compositing can vary by environment; see [Electron's documented limitations](https://www.electronjs.org/docs/latest/tutorial/custom-window-styles#limitations).
 
@@ -167,6 +169,8 @@ export COMPANION_STATE_DIR="$(mktemp -d)"
 ./launch.sh self-test
 COMPANION_CHECK=1 ./launch.sh codex-test
 ```
+
+Run `npm run benchmark` for an isolated 400-update photo-preview workload. It reports process CPU time, elapsed time, and photo reads; results vary by machine and do not measure total Codex CPU.
 
 The self-test covers real controls, photo import, saved looks, undo, and transparency. The Codex integration check sends no prompts, tests the existing app's rendering, and writes a local report. Close its separate window after reading the report. Tests temporarily modify the selected state directory; never run them against state used by another active companion.
 

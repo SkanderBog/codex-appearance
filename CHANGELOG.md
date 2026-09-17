@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-alpha.2
+
+- Replace continuous settings polling with directory change notifications, retaining a slower fallback for filesystems without notifications.
+- Ignore conversation-text mutations when maintaining Panels and route markers; combine structural changes into one animation frame.
+- Cache one bounded background photo, invalidating it when the file changes, disappears, or becomes a symlink.
+- Combine queued style updates, skip unchanged styles and UI elements, and defer hidden floating-preview updates until shown.
+- Add a repeatable photo-preview CPU benchmark and regression checks for notifications, update bursts, cache invalidation, and control repair.
+
 ## 0.4.0-alpha.1
 
 - Add independent home and conversation artwork strength, including an option to hide artwork on either screen.

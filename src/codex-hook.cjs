@@ -4,6 +4,8 @@ const electron = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { evaluate } = require('./evaluate.cjs');
+const { installControls, removeControls } = require('./controls.cjs');
+const { coalesceUpdates, watchSettings } = require('./updates.cjs');
 const { healthScript, layoutFailures } = require('./layout-health.cjs');
 const { ROOT, STATE, SETTINGS, readSettings, cssFor, saveSettings } = require('./core.cjs');
 fs.mkdirSync(STATE, { recursive: true, mode: 0o700 });
@@ -11,6 +13,7 @@ const logFile = path.join(STATE, 'codex-bridge.json');
 const OriginalWindow = electron.BrowserWindow;
 const windows = new Map();
 const updates = new WeakMap();
+const appliedCSS = new WeakMap();
 function log(extra = {}) {
   fs.writeFileSync(
     logFile,
@@ -30,43 +33,14 @@ function log(extra = {}) {
     ),
   );
 }
-const installControls = `(() => {
-  window.__companionTogglePanels = () => {
-    const reveal = document.documentElement.toggleAttribute('data-companion-reveal');
-    const side = document.querySelector('.app-shell-left-panel');
-    if (reveal && (!side || side.getBoundingClientRect().width === 0)) document.querySelector('button[class*="group/sidebar-trigger"]')?.click();
-  };
-  const mark = () => {
-    const route = document.querySelector('[data-testid="home-icon"]') ? 'home' : 'task';
-    if (document.documentElement.dataset.companionRoute !== route) document.documentElement.dataset.companionRoute = route;
-    document.querySelectorAll('.app-shell-left-panel').forEach(e => e.setAttribute('data-companion-panel', 'sidebar'));
-    // The native menu bar reserves space for window controls. Participate in its
-    // flex layout so the button cannot float over controls or conversation text.
-    const header = document.querySelector('[class*="_ApplicationMenuTopBar_"]');
-    if (!header) return;
-    let bar = document.getElementById('companion-access');
-    if (!bar) {
-      bar = document.createElement('div'); bar.id = 'companion-access';
-      const panels = document.createElement('button'); panels.type = 'button';
-      panels.textContent = 'Panels'; panels.title = 'Toggle sidebar (Ctrl+B or Ctrl+Alt+F)';
-      panels.onclick = () => window.__companionTogglePanels();
-      bar.append(panels);
-    }
-    if (bar.parentElement !== header) header.append(bar);
-  };
-  mark();
-  if (!window.__companionObserver) { window.__companionObserver = new MutationObserver(mark); window.__companionObserver.observe(document.body, {childList:true, subtree:true}); }
-  return { root: document.documentElement.getAttribute('data-codex-window-type'),
-    bodyBackground: getComputedStyle(document.body).backgroundColor,
-    textColor: getComputedStyle(document.body).color,
-    panels: document.querySelectorAll('[data-companion-panel]').length };
-})()`;
+
 function update(win) {
-  const next = (updates.get(win) || Promise.resolve())
-    .catch(() => {})
-    .then(() => applyCurrent(win));
-  updates.set(win, next);
-  return next;
+  if (!updates.has(win))
+    updates.set(
+      win,
+      coalesceUpdates(() => applyCurrent(win)),
+    );
+  return updates.get(win)();
 }
 async function applyCurrent(win) {
   const state = windows.get(win);
@@ -74,23 +48,21 @@ async function applyCurrent(win) {
   const s = readSettings();
   try {
     if (!win.webContents.getURL().startsWith('app://')) return;
+    const css = cssFor(s, { codex: true });
+    if (appliedCSS.get(win) === css) return;
     const baseline = s.enabled ? await evaluate(win.webContents, healthScript) : null;
     const after = s.enabled
       ? `return ${installControls};`
-      : `
-      document.getElementById('companion-access')?.remove();
-      document.documentElement.removeAttribute('data-companion-reveal');
-      document.documentElement.removeAttribute('data-companion-route');
-      window.__companionObserver?.disconnect(); delete window.__companionObserver;
-      delete window.__companionTogglePanels;
-      document.querySelectorAll('[data-companion-panel]').forEach(e => e.removeAttribute('data-companion-panel'));
-      return { restored: true };`;
+      : `${removeControls} return { restored: true };`;
+    // The DOM is about to change. A failed apply must still run full cleanup,
+    // even when the previous successful state was already disabled.
+    appliedCSS.delete(win);
     const result = await evaluate(
       win.webContents,
       `(() => {
       let style=document.getElementById('companion-appearance-style');
       if (!style) { style=document.createElement('style'); style.id='companion-appearance-style'; document.head.append(style); }
-      style.textContent=${JSON.stringify(cssFor(s, { codex: true }))};
+      style.textContent=${JSON.stringify(css)};
       ${after}
     })()`,
     );
@@ -112,16 +84,18 @@ async function applyCurrent(win) {
     } else {
       state.originalSetBackground(state.originalBackground);
     }
+    appliedCSS.set(win, css);
     state.applied = s.enabled;
     log();
   } catch (e) {
+    appliedCSS.delete(win);
     state.error = e.message;
     if (s.enabled) {
       // A partial apply must not strand an unusable style or transparent surface.
       try {
         await evaluate(
           win.webContents,
-          `document.getElementById('companion-appearance-style')?.remove()`,
+          `${removeControls} document.getElementById('companion-appearance-style')?.remove()`,
         );
         state.originalSetBackground(state.originalBackground);
       } catch {}
@@ -158,6 +132,7 @@ class StyledWindow extends OriginalWindow {
       originalSetBackground(readSettings().enabled ? '#00000000' : color);
     };
     this.webContents.on('did-finish-load', () => {
+      appliedCSS.delete(this);
       update(this);
       setTimeout(() => update(this), 2500);
       if (process.env.COMPANION_CHECK === '1')
@@ -200,10 +175,10 @@ class StyledWindow extends OriginalWindow {
 }
 try {
   module.exports = { StyledWindow };
-  fs.watchFile(SETTINGS, { interval: 250, persistent: false }, () => {
+  const stopWatching = watchSettings(SETTINGS, () => {
     for (const win of windows.keys()) update(win);
   });
-  electron.app.on('before-quit', () => fs.unwatchFile(SETTINGS));
+  electron.app.on('before-quit', stopWatching);
   log({ installed: true });
 } catch (e) {
   log({ installed: false, error: e.message });

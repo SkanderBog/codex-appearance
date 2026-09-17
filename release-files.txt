@@ -28,6 +28,7 @@ launch.sh
 package-lock.json
 package.json
 release-files.txt
+scripts/benchmark.cjs
 scripts/check.cjs
 scripts/desktop-launch.sh
 scripts/dialog-driver.py
@@ -41,6 +42,7 @@ scripts/release.py
 scripts/sandbox-env.sh
 scripts/stop-test.py
 src/codex-hook.cjs
+src/controls.cjs
 src/core.cjs
 src/evaluate.cjs
 src/file-dialogs.cjs
@@ -57,6 +59,7 @@ src/preview.js
 src/self-test.cjs
 src/ui.css
 src/ui.js
+src/updates.cjs
 test/core.test.cjs
 test/fixtures/background.png
 test/fixtures/background.webp
@@ -64,3 +67,4 @@ test/test_archive.py
 test/test_launcher.py
 test/test_photos.py
 test/test_public_release.py
+test/updates.test.cjs

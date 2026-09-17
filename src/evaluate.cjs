@@ -24,7 +24,8 @@ async function applyStyle(contents, css) {
     `(() => {
     let style=document.getElementById('companion-appearance-style');
     if (!style) { style=document.createElement('style'); style.id='companion-appearance-style'; document.head.append(style); }
-    style.textContent=${JSON.stringify(css)};
+    const css=${JSON.stringify(css)};
+    if (style.textContent !== css) style.textContent=css;
   })()`,
   );
 }

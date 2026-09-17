@@ -314,8 +314,35 @@ async function integrationCheck(win, update) {
       (await win.webContents.capturePage()).toPNG(),
     );
 
+    await evaluate(
+      win.webContents,
+      `(() => {
+      window.__companionStyleWrites = 0;
+      window.__companionWriteObserver = new MutationObserver(records => window.__companionStyleWrites += records.length);
+      window.__companionWriteObserver.observe(document.getElementById('companion-appearance-style'), {childList:true});
+    })()`,
+    );
+    await Promise.all(Array.from({ length: 30 }, () => update()));
+    const writes = await evaluate(
+      win.webContents,
+      `(() => {
+      const count = window.__companionStyleWrites;
+      window.__companionWriteObserver.disconnect();
+      delete window.__companionWriteObserver; delete window.__companionStyleWrites;
+      return count;
+    })()`,
+    );
+    check('Unchanged refresh bursts do not rewrite the Codex stylesheet', writes === 0, {
+      requests: 30,
+      writes,
+    });
+
     // Deliberately obstruct the input only while our test style is installed.
     // The same production guard must disable styling and remove its controls.
+    // Start disabled to verify that the unchanged-style shortcut cannot bypass
+    // cleanup after a failed attempt to enable the layer.
+    saveSettings({ ...readSettings(), enabled: false });
+    await update();
     await evaluate(
       win.webContents,
       `(() => {
@@ -333,6 +360,7 @@ async function integrationCheck(win, update) {
     })()`,
     );
     try {
+      saveSettings({ ...readSettings(), enabled: true, photoTint: 0.17 });
       await update();
       const recovered = await getState();
       const recoveredHealth = await evaluate(win.webContents, healthScript);

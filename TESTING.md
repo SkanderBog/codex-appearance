@@ -6,6 +6,15 @@ Automated coverage includes settings validation, injection/path rejection, all p
 
 GUI self-tests exercise actual controls, drag-and-drop image import, resizing, alpha rendering, saved-look import/export, undo, reset, and layout. An optional integration check exercises real Codex without sending prompts. Reports and screenshots stay local.
 
+## 0.4.0-alpha.2 optimization checks (2026-09-17)
+
+- All 21 Node and 21 Python regression tests passed, including real atomic settings-file replacement, ignored unrelated file changes, bounded update queues, and photo-cache invalidation.
+- All 48 companion graphical assertions and 26 real-Codex integration assertions passed. Additional checks cover zero full-document companion scans during 60 streamed-content mutations, repair after structural navigation, unchanged UI nodes and styles, and hidden-preview catch-up. Thirty unchanged Codex refresh requests produced zero stylesheet rewrites; layout recovery still passed.
+- A local before/after benchmark ran 400 photo-preview snapshots, including JSON serialization, three times per version. Median process CPU time decreased from 3614.8 ms to 3134.3 ms (about 13%); photo-file reads decreased from 800 to 1. Both versions produced 448,302,060 bytes of serialized output. This is a specific workload on one machine, not a claim about total Codex CPU or battery usage.
+- The photo cache retains at most one image with up to 8 MiB of encoded text. Larger images remain supported without being retained in the cache. Native settings notifications perform no periodic settings-file polling; a 2-second polling fallback is used only if filesystem watching fails.
+- Use `node scripts/benchmark.cjs [source-directory]` to repeat the photo workload against another checkout. Timing varies with hardware and system load; correctness checks assert work counts rather than timing thresholds.
+- Syntax, formatting, the 70-file source manifest, and source/archive verification passed. Supported platforms and the remaining coverage below are unchanged.
+
 ## 0.4.0-alpha.1 release results (2026-09-17)
 
 - All 17 Node and 21 Python regression tests passed, including schema migration, saved-look replacement, photo-derived palettes, bundled-asset hashes, attribution export/import, and layout-regression comparisons.

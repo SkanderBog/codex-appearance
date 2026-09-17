@@ -158,13 +158,26 @@ function paletteFor(value) {
     ? { name: 'Custom', background: s.background, foreground: s.foreground, accent: s.accent }
     : PRESETS[s.preset];
 }
+// Keep only one small encoded photo; validate its file identity on every use.
+// Large imports remain supported without retaining a large permanent cache.
+let photoCache;
 function assetDataURL(id) {
   if (!ASSET_PATTERN.test(id)) return '';
   try {
     const file = path.join(ASSETS, id);
-    if (!fs.lstatSync(file).isFile() || fs.statSync(file).size > 20 * 1024 * 1024) return '';
-    return 'data:image/jpeg;base64,' + fs.readFileSync(file).toString('base64');
+    const stat = fs.lstatSync(file, { bigint: true });
+    if (!stat.isFile() || stat.size > 20n * 1024n * 1024n) {
+      photoCache = null;
+      return '';
+    }
+    const key = [id, stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(':');
+    if (photoCache?.key === key) return photoCache.value;
+    photoCache = null;
+    const value = 'data:image/jpeg;base64,' + fs.readFileSync(file).toString('base64');
+    if (value.length <= 8 * 1024 * 1024) photoCache = { key, value };
+    return value;
   } catch {
+    photoCache = null;
     return '';
   }
 }
