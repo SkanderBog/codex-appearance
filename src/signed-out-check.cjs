@@ -171,7 +171,7 @@ async function integrationCheck(win, update, native = {}) {
     check('No look removes the signed-out appearance layer', !state.styled && !state.controls);
     check('Sign-in remains reachable with No look', state.reachable);
     if (isNative) {
-      const restored = [
+      const restoredKeys = [
         'foreground',
         'background',
         'opacity',
@@ -179,9 +179,16 @@ async function integrationCheck(win, update, native = {}) {
         'size',
         'accent',
         'image',
-      ].every((key) => state.appearance[key] === baseline[key]);
+      ];
+      const differences = Object.fromEntries(
+        restoredKeys
+          .filter((key) => state.appearance[key] !== baseline[key])
+          .map((key) => [key, { expected: baseline[key], actual: state.appearance[key] }]),
+      );
+      const restored = Object.keys(differences).length === 0;
       check('No look restores the underlying Codex computed appearance', restored, {
         restored,
+        differences,
         photoRemoved: !state.appearance.photo,
         image: state.appearance.image,
       });
