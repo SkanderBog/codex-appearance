@@ -40,8 +40,12 @@ def digest(path):
 
 
 def run(args, **kwargs):
-    return subprocess.run(args, check=True, capture_output=True, text=True,
-                          timeout=300, **kwargs)
+    result = subprocess.run(args, capture_output=True, text=True, timeout=300, **kwargs)
+    if result.returncode:
+        # These commands operate only on the fixed public CI fixture. Preserve
+        # the native verifier's reason instead of hiding it behind an exit code.
+        raise ValueError(f'{args[0]} failed: {(result.stderr or result.stdout)[-6000:].strip()}')
+    return result
 
 
 def validate_zip(path):
@@ -67,7 +71,9 @@ def powershell(script, env):
 
 def verify_signature(install, system):
     if system == 'Darwin':
-        run(['codesign', '--verify', '--deep', '--strict', '-R',
+        run(['codesign', '--verify', '--deep', '--strict', str(install)])
+        # The bundle identity applies to the outer app, not its nested helpers.
+        run(['codesign', '--verify', '--strict', '-R',
              'anchor apple generic and certificate leaf[subject.OU] = "2DC432GLL2" '
              'and identifier "com.openai.codex"', str(install)])
     else:
@@ -75,7 +81,8 @@ def verify_signature(install, system):
             "$ErrorActionPreference = 'Stop'; "
             "$s = Get-AuthenticodeSignature -LiteralPath $env:COMPANION_CI_EXECUTABLE; "
             "if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'OpenAI') "
-            "{ throw 'Native Codex executable signature did not verify as OpenAI' }",
+            "{ throw ('Native Codex signature: ' + $s.Status + '; ' + $s.StatusMessage + "
+            "'; signer=' + $s.SignerCertificate.Subject) }",
             {'COMPANION_CI_EXECUTABLE': str(install / 'ChatGPT.exe')})
 
 
