@@ -1,0 +1,14 @@
+.runtime/
+.state/
+work/
+__pycache__/
+*.pyc
+outputs/
+dist/
+node_modules/
+Start Companion.desktop
+*.log
+.env
+.env.*
+.codex/
+.agents/

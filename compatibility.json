@@ -1,0 +1,10 @@
+{
+  "platform": "linux",
+  "architecture": "x86_64",
+  "builds": {
+    "26.901.41123": {
+      "mainSha256": "1a12a4625ca931b86befd0c40e3ab1b17355bbb8ef87092b1d239e0439ce0d26",
+      "windowConstructors": 4
+    }
+  }
+}

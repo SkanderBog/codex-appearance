@@ -1,0 +1,136 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font: var(--companion-font-size, 14px) / var(--companion-line-height, 1.6)
+    var(--companion-font, 'DejaVu Sans Mono', monospace);
+  color: var(--companion-fg, #edf3f5);
+  background: transparent;
+}
+.terminal {
+  height: 100%;
+  border: 1px solid #ffffff35;
+  border-radius: 12px;
+  background: var(--companion-bg, rgba(17, 23, 28, 0.82));
+  overflow: hidden;
+}
+header {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  border-bottom: 1px solid #ffffff22;
+  -webkit-app-region: drag;
+  font-size: 12px;
+}
+.dim {
+  color: color-mix(in srgb, var(--companion-fg) 55%, transparent);
+}
+.buttons {
+  display: flex;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+button {
+  font: 11px monospace;
+  background: #ffffff09;
+  border: 1px solid #ffffff30;
+  color: var(--companion-fg);
+  border-radius: 5px;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+button:hover {
+  background: #ffffff18;
+}
+.layout {
+  display: flex;
+  height: calc(100% - 50px);
+}
+main {
+  padding: 28px;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+.kicker {
+  font-size: 10px;
+  color: var(--companion-accent);
+  letter-spacing: 1.5px;
+}
+.prompt {
+  color: var(--companion-accent);
+  margin: 22px 0;
+}
+.sample-answer {
+  margin: 0 0 20px;
+  opacity: 1;
+}
+.details {
+  display: flex;
+  gap: 14px;
+  color: var(--companion-accent);
+  font-size: 11px;
+  margin: 25px 0;
+}
+.code {
+  padding: 14px 18px;
+  border-left: 2px solid var(--companion-accent);
+  background: #ffffff08;
+  font-size: var(--companion-code-size, 13px);
+}
+.accent {
+  color: var(--companion-accent);
+}
+.input {
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #ffffff35;
+  margin-top: 25px;
+  padding-top: 15px;
+  color: var(--companion-accent);
+}
+input {
+  min-width: 0;
+  flex: 1;
+  color: var(--companion-fg);
+  background: transparent;
+  border: 0;
+  outline: none;
+  font: inherit;
+}
+input::placeholder {
+  color: color-mix(in srgb, var(--companion-fg) 50%, transparent);
+}
+.hint {
+  font-size: 9px;
+  color: color-mix(in srgb, var(--companion-fg) 50%, transparent);
+  margin-top: 18px;
+}
+.preview-sidebar {
+  display: none;
+  width: 185px;
+  padding: 22px 14px;
+  border-right: 1px solid #ffffff22;
+  font-size: 11px;
+}
+.reveal .preview-sidebar,
+.full .preview-sidebar {
+  display: block;
+}
+@media (max-width: 650px) {
+  main {
+    padding: 18px;
+  }
+  .details {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .title .dim {
+    display: none;
+  }
+}

@@ -1,0 +1,25 @@
+name: Linux alpha bug
+description: Report a reproducible problem without sharing private account data.
+title: '[Linux alpha] '
+body:
+  - type: markdown
+    attributes:
+      value: 'Please exclude credentials, profiles, personal paths, photos, and conversation screenshots. Report vulnerabilities privately using SECURITY.md.'
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Companion version, Codex build, distribution, desktop, X11/XWayland, and graphics hardware/driver.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps, expected result, and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Setup check
+      description: Paste ./launch.sh doctor output after reviewing it. Do not attach your state directory or startup logs.

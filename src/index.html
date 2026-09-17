@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>Codex Appearance</title>
+    <link rel="stylesheet" href="ui.css" />
+    <style id="sample-style"></style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="titlebar">
+        <span class="logo">&gt;_</span><strong>Codex <span>Appearance</span></strong
+        ><span class="local-tag">PERSONAL / LOCAL</span>
+        <div class="window-actions">
+          <button id="minimize" title="Minimize" aria-label="Minimize">−</button
+          ><button id="maximize" title="Maximize or restore" aria-label="Maximize or restore">
+            □</button
+          ><button id="close" title="Close" aria-label="Close">×</button>
+        </div>
+      </header>
+      <div class="workspace">
+        <nav class="navigation" aria-label="Appearance categories">
+          <div class="nav-caption">MAKE IT YOURS</div>
+          <button class="nav-item selected" data-page="palettes" aria-current="page">
+            <span>◉</span> Palettes
+          </button>
+          <button class="nav-item" data-page="background"><span>▧</span> Background</button>
+          <button class="nav-item" data-page="typography"><span>Aa</span> Typography</button>
+          <button class="nav-item" data-page="layout"><span>▤</span> Layout</button>
+          <button class="nav-item" data-page="looks"><span>◇</span> Saved looks</button>
+          <div class="nav-bottom">
+            <button id="undo" class="quiet" disabled>↶ Undo change</button
+            ><button id="restore" class="quiet">Restore Codex style</button
+            ><span class="version" id="version"></span
+            ><span class="version" id="app-version"></span>
+          </div>
+        </nav>
+        <main class="editor">
+          <section class="page" id="page-palettes">
+            <div class="eyebrow">01 / COLOR</div>
+            <h1>Set the mood.</h1>
+            <p class="description">Sixteen starting points. Your own colors, too.</p>
+            <div id="themes" class="themes" aria-label="Color palettes"></div>
+            <div class="divider"></div>
+            <label class="switch-row"
+              ><span
+                ><strong>Custom colors</strong
+                ><small>Fine-tune background, text, and accent</small></span
+              ><input id="customColors" type="checkbox" role="switch"
+            /></label>
+            <div class="color-row">
+              <label
+                >Background<input
+                  type="color"
+                  id="background"
+                  aria-label="Custom background color" /></label
+              ><label
+                >Text<input type="color" id="foreground" aria-label="Custom text color" /></label
+              ><label
+                >Accent<input type="color" id="accent" aria-label="Custom accent color"
+              /></label>
+            </div>
+            <p id="contrast-note" class="helper"></p>
+            <button id="copy" class="text-button">Copy palette for Codex →</button>
+          </section>
+          <section class="page" id="page-background" hidden>
+            <div class="eyebrow">02 / BACKGROUND</div>
+            <h1>A view of your own.</h1>
+            <p class="description">Bring a photo, or keep things simple.</p>
+            <div class="segmented" aria-label="Background type">
+              <button data-mode="solid">Solid</button><button data-mode="gradient">Gradient</button
+              ><button data-mode="photo">Photo</button>
+            </div>
+            <div id="solid-options">
+              <div class="info-card">
+                <span class="large-icon">◌</span><strong>A little breathing room.</strong>
+                <p>
+                  Your palette sets the background color. Adjust opacity on the right to let your
+                  desktop show through.
+                </p>
+              </div>
+            </div>
+            <div id="gradient-options" hidden>
+              <label class="color-setting"
+                ><span>Second color</span
+                ><input id="gradientColor" type="color" aria-label="Second gradient color" /></label
+              ><label class="range-label" for="gradientAngle"
+                >Direction <output id="gradientAngle-value"></output></label
+              ><input id="gradientAngle" type="range" min="0" max="360" />
+              <div class="helper">Your palette supplies the first color.</div>
+            </div>
+            <div id="photo-options" hidden>
+              <button id="photo-drop" class="photo-drop">
+                <img id="photo-thumb" alt="Selected background" hidden /><span id="drop-label"
+                  ><strong>＋ Choose a photo</strong><small>or drop an image here</small></span
+                ><span class="file-types">PNG, JPEG, WebP · up to 20 MB</span>
+              </button>
+              <div class="photo-meta">
+                <span id="photo-name">No photo selected</span
+                ><button id="remove-photo" class="text-button">Remove</button>
+              </div>
+              <label class="select-row" for="photoFit"
+                >Fit<select id="photoFit">
+                  <option value="cover">Fill window</option>
+                  <option value="contain">Fit entire photo</option>
+                </select></label
+              >
+              <div class="paired">
+                <div>
+                  <label class="range-label" for="photoX"
+                    >Horizontal <output id="photoX-value"></output></label
+                  ><input id="photoX" type="range" min="0" max="100" />
+                </div>
+                <div>
+                  <label class="range-label" for="photoY"
+                    >Vertical <output id="photoY-value"></output></label
+                  ><input id="photoY" type="range" min="0" max="100" />
+                </div>
+              </div>
+              <label class="range-label" for="photoTint"
+                >Color overlay <output id="photoTint-value"></output></label
+              ><input id="photoTint" type="range" min="0" max="90" />
+              <p class="helper">More overlay makes text easier to read.</p>
+              <label class="range-label" for="photoBlur"
+                >Photo blur <output id="photoBlur-value"></output></label
+              ><input id="photoBlur" type="range" min="0" max="24" />
+              <p class="helper">Only the photo is blurred. Text stays sharp.</p>
+            </div>
+            <div class="privacy-note">
+              ⌁ Photos are copied to this app’s local storage.<br />No upload service or account is
+              needed.
+            </div>
+          </section>
+          <section class="page" id="page-typography" hidden>
+            <div class="eyebrow">03 / TYPOGRAPHY</div>
+            <h1>Make every word clear.</h1>
+            <p class="description">Choose a reading style that feels comfortable.</p>
+            <label class="field-label" for="font">Interface font</label
+            ><select id="font" class="full-select"></select>
+            <label class="range-label" for="fontSize"
+              >Conversation text <output id="fontSize-value"></output></label
+            ><input id="fontSize" type="range" min="11" max="26" />
+            <label class="range-label" for="codeSize"
+              >Code text <output id="codeSize-value"></output></label
+            ><input id="codeSize" type="range" min="10" max="24" />
+            <label class="range-label" for="lineHeight"
+              >Line spacing <output id="lineHeight-value"></output></label
+            ><input id="lineHeight" type="range" min="125" max="200" step="5" />
+            <div class="info-card compact">
+              <strong>Still crisp. Still solid.</strong>
+              <p>
+                Background opacity never changes the opacity of letters. Code keeps a monospace
+                font, even when you choose a different interface font.
+              </p>
+            </div>
+          </section>
+          <section class="page" id="page-layout" hidden>
+            <div class="eyebrow">04 / SPACE</div>
+            <h1>Room for the conversation.</h1>
+            <p class="description">Keep navigation close, without keeping it in view.</p>
+            <label class="switch-row"
+              ><span
+                ><strong>Terminal mode</strong
+                ><small>Hide the sidebar until you need it</small></span
+              ><input id="terminalMode" type="checkbox" role="switch"
+            /></label>
+            <div class="shortcut-note">
+              <kbd>Ctrl</kbd> + <kbd>B</kbd><span>reveal or hide the sidebar</span>
+            </div>
+            <label class="field-label" for="contentWidth">Conversation width</label
+            ><select id="contentWidth" class="full-select">
+              <option value="comfortable">Comfortable · 48 rem</option>
+              <option value="wide">Wide · 76 rem</option>
+              <option value="full">Use all available space</option>
+            </select>
+            <label class="switch-row spaced"
+              ><span
+                ><strong>Reduce motion</strong><small>Minimize interface animations</small></span
+              ><input id="reducedMotion" type="checkbox" role="switch"
+            /></label>
+            <div class="info-card compact">
+              <strong>Features stay within reach.</strong>
+              <p>
+                The Panels button also opens navigation. Codex’s menus, tools, approvals, and
+                conversation input remain available.
+              </p>
+              <p><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>R</kbd> restores the normal style.</p>
+            </div>
+            <button id="reset" class="text-button">Reset all appearance settings</button>
+          </section>
+          <section class="page" id="page-looks" hidden>
+            <div class="eyebrow">05 / YOUR COLLECTION</div>
+            <h1>Keep your favorites.</h1>
+            <p class="description">Save a whole look, including its photo and layout.</p>
+            <button id="save-look" class="primary full-width">
+              ＋ Save current look <kbd>Ctrl S</kbd>
+            </button>
+            <div id="looks" class="looks"></div>
+            <div class="divider"></div>
+            <div class="paired">
+              <button id="import-look" class="secondary">Import a look</button
+              ><button id="export-look" class="secondary">Export current look</button>
+            </div>
+            <p class="helper">
+              Exports include the background photo. Importing adds a look to your collection; select
+              it to apply.
+            </p>
+          </section>
+        </main>
+        <aside class="preview-column" aria-label="Live appearance preview">
+          <div class="preview-heading">
+            <span>LIVE PREVIEW</span
+            ><label class="enable-label"
+              ><input id="enabled" type="checkbox" role="switch" />Style active</label
+            >
+          </div>
+          <div class="preview-stage">
+            <div class="stage-orbit"></div>
+            <div id="sampleWindow" class="sample-window">
+              <div class="sample-bar">
+                <span>&gt;_ codex</span
+                ><button id="sample-panels" title="Toggle sample sidebar">Panels</button>
+              </div>
+              <div class="sample-layout">
+                <div id="sample-sidebar" class="sample-sidebar">
+                  WORKSPACE
+                  <p>› Conversation</p>
+                  <p>Files</p>
+                  <p>Settings</p>
+                </div>
+                <div class="sample-content">
+                  <span class="sample-kicker">YOUR WORKSPACE, YOUR WAY</span>
+                  <p class="sample-prompt">❯ Make room to think.</p>
+                  <p class="sample-answer">
+                    A clear conversation.<br />A space that feels like yours.
+                  </p>
+                  <div class="sample-code">
+                    <span>background</span> <b id="sample-alpha">82%</b><br /><span>text</span> 100%
+                  </div>
+                  <div class="sample-input">❯ <span>Ask anything</span><i></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="preview-caption">
+            <span id="look-label">Graphite / Solid</span><span>Opaque text ✓</span>
+          </div>
+          <label class="range-label" for="opacity"
+            >Background opacity <output id="opacity-value"></output></label
+          ><input id="opacity" type="range" min="35" max="100" />
+          <div class="range-hints"><span>See through</span><span>Solid</span></div>
+          <div class="preview-actions">
+            <button id="preview" class="secondary">Floating preview ↗</button
+            ><button id="launch" class="primary">Open styled Codex ↗</button>
+          </div>
+          <p class="launch-note">
+            The floating preview shows real desktop transparency. Styled Codex opens a separate UI
+            profile using your existing account and tasks.
+          </p>
+        </aside>
+      </div>
+      <footer>
+        <span class="status-light"></span
+        ><span id="status" role="status" aria-live="polite"
+          >Ready. Settings stay on this computer.</span
+        ><button id="quick-save" title="Save current look (Ctrl+S)">Save look ↗</button>
+      </footer>
+    </div>
+    <dialog id="save-dialog">
+      <form id="save-form">
+        <div class="eyebrow">YOUR COLLECTION</div>
+        <h2>Name this look.</h2>
+        <p>Colors, background, typography, and layout, together.</p>
+        <label class="field-label" for="look-name">Look name</label
+        ><input
+          id="look-name"
+          maxlength="60"
+          required
+          placeholder="Evening focus"
+          autocomplete="off"
+        />
+        <div class="dialog-actions">
+          <button type="button" id="cancel-save" class="secondary">Cancel</button
+          ><button class="primary" type="submit">Save look</button>
+        </div>
+      </form>
+    </dialog>
+    <script src="ui.js"></script>
+  </body>
+</html>

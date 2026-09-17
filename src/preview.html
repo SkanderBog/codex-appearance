@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>Codex appearance preview</title>
+    <link rel="stylesheet" href="preview.css" />
+  </head>
+  <body>
+    <div class="terminal">
+      <header>
+        <span class="title">&gt;_ codex <span class="dim">/ appearance preview</span></span>
+        <div class="buttons">
+          <button id="reveal">Panels</button
+          ><button id="close" aria-label="Close preview">×</button>
+        </div>
+      </header>
+      <div class="layout">
+        <aside class="preview-sidebar">
+          <span class="dim">WORKSPACE</span>
+          <p>› Current conversation</p>
+          <p>Files</p>
+          <p>Settings</p>
+        </aside>
+        <main>
+          <span class="kicker">PREVIEW · NO MESSAGES ARE SENT</span>
+          <p class="prompt">❯ A little more space to think.</p>
+          <p class="sample-answer">
+            The background lets your desktop show through.<br />The letters stay solid and easy to
+            read.
+          </p>
+          <p class="sample-answer">
+            This is a real transparent window.<br />Move it over something bright to see the
+            difference.
+          </p>
+          <div class="details">
+            <span>✓ Background alpha</span><span>✓ Opaque text</span><span>✓ Panels on demand</span>
+          </div>
+          <div class="code">
+            <span class="dim">appearance</span><br /><span class="accent">background</span>
+            <span id="alpha">82%</span><br /><span class="accent">text</span> 100%
+          </div>
+          <div class="input">
+            <span>❯</span
+            ><input placeholder="Preview only — try typing here" aria-label="Preview input" /><span
+              class="dim"
+              >↵</span
+            >
+          </div>
+          <p class="hint">Drag the title bar to move · Panels opens extra controls · Esc closes</p>
+        </main>
+      </div>
+    </div>
+    <script src="preview.js"></script>
+  </body>
+</html>
