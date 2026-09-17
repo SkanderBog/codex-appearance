@@ -4,6 +4,38 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ROOT = path.resolve(__dirname, '..');
 
+function copyPortableHelper(source, destination) {
+  source = fs.realpathSync(source);
+  const links = [];
+  function inspect(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name);
+      if (entry.isSymbolicLink()) {
+        const target = fs.realpathSync(file);
+        const relative = path.relative(source, target);
+        if (path.isAbsolute(relative) || relative === '..' || relative.startsWith('..' + path.sep))
+          throw new Error('Photo helper link escapes its bundle.');
+        links.push({
+          file: path.relative(source, file),
+          target: relative,
+          type: fs.statSync(target).isDirectory() ? 'dir' : 'file',
+        });
+      } else if (entry.isDirectory()) inspect(file);
+    }
+  }
+  inspect(source);
+  fs.cpSync(source, destination, { recursive: true, verbatimSymlinks: true });
+  for (const link of links) {
+    const file = path.join(destination, link.file);
+    fs.unlinkSync(file);
+    fs.symlinkSync(
+      path.relative(path.dirname(file), path.join(destination, link.target)),
+      file,
+      link.type,
+    );
+  }
+}
+
 function stageSource(root, destination) {
   root = fs.realpathSync(root);
   const names = fs
@@ -89,7 +121,6 @@ async function build() {
     appVersion: version,
     buildVersion: version.split('-')[0],
     darwinDarkModeSupport: true,
-    extraResource: [helper],
     win32metadata: {
       CompanyName: 'Codex Appearance contributors',
       FileDescription: 'Unofficial Codex Appearance prototype',
@@ -97,6 +128,13 @@ async function build() {
     },
   });
   const folder = packages[0];
+  const resources =
+    process.platform === 'darwin'
+      ? path.join(folder, 'Codex Appearance.app/Contents/Resources')
+      : path.join(folder, 'resources');
+  // Packager's extraResource copier resolves symlinks into build-machine paths.
+  // Preserve only links that remain inside the copied helper after relocation.
+  copyPortableHelper(helper, path.join(resources, 'photo-helper'));
   const executable =
     process.platform === 'darwin'
       ? path.join(folder, 'Codex Appearance.app/Contents/MacOS/Codex Appearance')
@@ -110,4 +148,4 @@ if (require.main === module)
     console.error(error.message);
     process.exitCode = 1;
   });
-module.exports = { stageSource };
+module.exports = { stageSource, copyPortableHelper };

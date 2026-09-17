@@ -4,9 +4,35 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const { stageSource } = require('../scripts/package-desktop.cjs');
+const { stageSource, copyPortableHelper } = require('../scripts/package-desktop.cjs');
 const { photoCommand } = require('../src/photo-helper.cjs');
 const { photoPixels } = require('../src/signed-out-check.cjs');
+
+test(
+  'Bundled helper links survive relocation and reject external targets',
+  { skip: process.platform === 'win32' },
+  () => {
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'portable helper '));
+    try {
+      const source = path.join(folder, 'build');
+      const destination = path.join(folder, 'package');
+      fs.mkdirSync(path.join(source, 'framework/Versions/A'), { recursive: true });
+      fs.writeFileSync(path.join(source, 'framework/Versions/A/Python'), 'bundled runtime');
+      fs.symlinkSync('Versions/A/Python', path.join(source, 'framework/Python'));
+      fs.symlinkSync(path.join(source, 'framework/Python'), path.join(source, 'Python'));
+      copyPortableHelper(source, destination);
+      fs.renameSync(source, source + '-unavailable');
+      assert.equal(path.isAbsolute(fs.readlinkSync(path.join(destination, 'Python'))), false);
+      assert.equal(fs.readFileSync(path.join(destination, 'Python'), 'utf8'), 'bundled runtime');
+      fs.renameSync(source + '-unavailable', source);
+      fs.writeFileSync(path.join(folder, 'external'), 'not bundled');
+      fs.symlinkSync(path.join(folder, 'external'), path.join(source, 'outside'));
+      assert.throws(() => copyPortableHelper(source, path.join(folder, 'rejected')), /escapes/);
+    } finally {
+      fs.rmSync(folder, { recursive: true, force: true });
+    }
+  },
+);
 
 test('Native screenshot evidence distinguishes alpha, fixture colors and opaque foreground', () => {
   const pixels = Buffer.from([

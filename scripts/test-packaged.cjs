@@ -4,6 +4,22 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const info = JSON.parse(fs.readFileSync(path.join(root, 'dist/native/package-info.json'), 'utf8'));
+// Test the actual relocatable distribution, with its original helper build
+// unavailable. A reference back to the packaging machine must fail here.
+const relocated = path.join(root, '.ci/relocated application', path.basename(info.folder));
+const relativeExecutable = path.relative(info.folder, info.executable);
+fs.mkdirSync(path.dirname(relocated), { recursive: true });
+fs.renameSync(info.folder, relocated);
+info.folder = relocated;
+info.executable = path.join(relocated, relativeExecutable);
+fs.renameSync(
+  path.join(root, 'dist/native/helper'),
+  path.join(root, 'dist/native/helper-not-at-build-path'),
+);
+fs.writeFileSync(
+  path.join(root, 'dist/native/package-info.json'),
+  JSON.stringify(info, null, 2) + '\n',
+);
 const output = path.join(root, '.ci/packaged-results');
 const env = {
   ...process.env,
