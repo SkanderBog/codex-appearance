@@ -223,7 +223,7 @@ function cssFor(value, { codex = false, embedded = false } = {}) {
   let css = `${scope} { --companion-bg:${bg}; --companion-solid:${p.background}; --companion-fg:${p.foreground}; --companion-accent:${p.accent}; --companion-font-size:${s.fontSize}px; --companion-font:${font}; --companion-line-height:${s.lineHeight}; --companion-code-size:${s.codeSize}px; color-scheme:dark; }
 ${scope} { --companion-photo-cover:${1 - s.taskPhotoStrength * (1 - s.photoTint)}; }
 ${codex ? 'html[data-companion-route="home"]' : embedded ? '#sampleWindow[data-preview-route="home"]' : 'html[data-preview-route="home"]'} { --companion-photo-cover:${1 - s.homePhotoStrength * (1 - s.photoTint)}; }
-${embedded ? '' : 'html, body { background: transparent !important; } body { color:var(--companion-fg); }'}
+${embedded ? '' : 'html, body { background: transparent !important; } body { color:var(--companion-fg) !important; }'}
 ${surface} { background: var(--companion-bg) !important; position:relative; isolation:isolate; }
 ${image ? `${surface}::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background-color:${p.background}; background-image:${image}; background-size:${s.photoFit}; background-position:${s.photoX}% ${s.photoY}%; background-repeat:no-repeat; opacity:${alpha}; ${photo && s.photoBlur ? `filter:blur(${s.photoBlur}px);` : ''} }` : ''}
 `;
@@ -259,7 +259,13 @@ ${image ? `${surface}::before { content:""; position:absolute; inset:0; z-index:
  --color-token-side-bar-background:transparent !important; --color-background-sidebar:transparent !important;
  --color-background-elevated:var(--companion-solid) !important; --color-background-application-menu:var(--companion-solid) !important;
  --color-text-foreground:var(--companion-fg) !important; --color-token-foreground:var(--companion-fg) !important; --color-text-primary:var(--companion-fg) !important; --color-text-accent:var(--companion-accent) !important;
+ --color-text:var(--companion-fg) !important;
+ --app-color-text-foreground:var(--companion-fg) !important; --app-color-text-accent:var(--companion-accent) !important;
+ --app-color-background-surface:transparent !important; --app-color-background-surface-under:transparent !important;
+ --app-color-background-elevated-primary:var(--companion-solid) !important; --app-color-background-elevated-secondary:var(--companion-solid) !important;
+ --app-color-background-application-menu:var(--companion-solid) !important;
  --font-sans:${font} !important; --font-sans-default:${font} !important; --font-mono:'DejaVu Sans Mono',monospace !important;
+ --font-ui-family:${font} !important;
  --codex-chat-font-size:${s.fontSize}px !important; --codex-chat-code-font-size:${s.codeSize}px !important; --text-base:${s.fontSize}px !important;
  --thread-content-max-width:${{ comfortable: '48rem', wide: '76rem', full: '100%' }[s.contentWidth]} !important;
  --line-height-composer:${Number((s.fontSize * s.lineHeight).toFixed(2))}px !important;
