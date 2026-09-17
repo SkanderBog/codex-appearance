@@ -12,8 +12,14 @@ README.md
 RELEASE_READINESS.md
 SECURITY.md
 TESTING.md
+THIRD_PARTY_NOTICES.md
 assets/icon.png
 assets/icon.svg
+assets/themes/LICENSE
+assets/themes/arcade-signal.jpg
+assets/themes/catalog.json
+assets/themes/night-shift.jpg
+assets/themes/workbench.jpg
 compatibility.json
 docs/screenshots/background-controls.png
 docs/screenshots/floating-preview.png
@@ -40,6 +46,7 @@ src/evaluate.cjs
 src/file-dialogs.cjs
 src/index.html
 src/integration-check.cjs
+src/layout-health.cjs
 src/library.cjs
 src/main.cjs
 src/paths.cjs

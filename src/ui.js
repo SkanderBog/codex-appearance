@@ -7,6 +7,7 @@ let data,
   queue = Promise.resolve(),
   revision = 0,
   changing = 0,
+  editingLookId = null,
   sampleReveal = false;
 function status(text) {
   $('status').textContent = text;
@@ -29,6 +30,12 @@ const ranges = {
   photoY: [1, '%'],
   photoTint: [100, '%'],
   photoBlur: [1, ' px'],
+  homePhotoStrength: [100, '%'],
+  taskPhotoStrength: [100, '%'],
+  sidebarOpacity: [100, '%'],
+  headerOpacity: [100, '%'],
+  composerOpacity: [100, '%'],
+  readingOpacity: [100, '%'],
   gradientAngle: [1, '°'],
 };
 function palette(s) {
@@ -58,6 +65,7 @@ function render(next, css = true) {
     $(mode + '-options').hidden = mode !== s.backgroundMode;
   $('photo-name').textContent = s.photoName || 'No photo selected';
   $('remove-photo').hidden = !s.photo;
+  $('match-photo').disabled = !data.photoData;
   if (data.photoData) {
     $('photo-thumb').src = data.photoData;
     $('photo-thumb').hidden = false;
@@ -78,6 +86,8 @@ function render(next, css = true) {
       s.backgroundMode.slice(1);
   if (css) $('sample-style').textContent = data.previewCSS;
   $('undo').disabled = !data.canUndo;
+  $('redo').disabled = !data.canRedo;
+  $('safety-note').hidden = !data.layoutRestored;
   const luminance = (hex) => {
     const c = [1, 3, 5]
       .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -133,23 +143,41 @@ async function action(fn, message) {
     changing--;
   }
 }
-function openSave() {
-  $('look-name').value = '';
+function openSave(look = null) {
+  editingLookId = look?.id || null;
+  $('look-name').value = look?.name || '';
+  $('save-title').textContent = look ? 'Update this look.' : 'Name this look.';
+  $('save-description').textContent = look
+    ? 'Replace this saved look with your current colors, background, typography, and layout.'
+    : 'Colors, background, typography, and layout, together.';
+  $('save-submit').textContent = look ? 'Update look' : 'Save look';
   $('save-dialog').showModal();
   $('look-name').focus();
 }
 function renderLooks() {
   const list = $('looks');
   list.replaceChildren();
-  if (!data.looks.length) {
+  const query = $('look-search').value.trim().toLocaleLowerCase();
+  const looks = data.looks.filter((look) =>
+    [
+      look.name,
+      look.settings.customColors ? 'Custom colors' : palette(look.settings).name,
+      look.settings.backgroundMode,
+    ]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(query),
+  );
+  if (!looks.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent =
-      'Your favorite spaces, all in one place. Save your first look to start a collection.';
+    empty.textContent = data.looks.length
+      ? 'No matching looks. Try another name or palette.'
+      : 'Your favorite spaces, all in one place. Save your first look to start a collection.';
     list.append(empty);
     return;
   }
-  for (const look of data.looks) {
+  for (const look of looks) {
     const p = palette(look.settings),
       card = document.createElement('div');
     card.className = 'look-card';
@@ -173,6 +201,13 @@ function renderLooks() {
     name.append(sub);
     load.append(swatch, name);
     load.onclick = () => action(() => api.loadLook(look.id), 'Applied ' + look.name + '.');
+    const update = document.createElement('button');
+    update.className = 'text-button look-update';
+    update.textContent = 'Update';
+    update.title = 'Replace ' + look.name + ' with the current appearance';
+    update.setAttribute('aria-label', 'Update ' + look.name);
+    update.dataset.updateLook = look.id;
+    update.onclick = () => openSave(look);
     const remove = document.createElement('button');
     remove.className = 'look-delete';
     remove.textContent = '×';
@@ -180,12 +215,18 @@ function renderLooks() {
     remove.setAttribute('aria-label', 'Delete ' + look.name);
     remove.onclick = () =>
       action(() => api.deleteLook(look.id), 'Removed ' + look.name + ' from saved looks.');
-    card.append(load, remove);
+    card.append(load, update, remove);
     list.append(card);
   }
 }
 for (const button of document.querySelectorAll('[data-page]'))
   button.onclick = () => page(button.dataset.page);
+for (const button of document.querySelectorAll('button[data-preview-route]'))
+  button.onclick = () => {
+    $('sampleWindow').dataset.previewRoute = button.dataset.previewRoute;
+    for (const item of document.querySelectorAll('button[data-preview-route]'))
+      item.setAttribute('aria-pressed', String(item === button));
+  };
 for (const [key, [scale]] of Object.entries(ranges))
   $(key).oninput = (e) => change({ [key]: Number(e.target.value) / scale, enabled: true });
 for (const key of ['terminalMode', 'reducedMotion', 'enabled'])
@@ -222,6 +263,11 @@ $('photo-drop').onclick = () => {
   action(() => api.pickPhoto(), 'Photo added locally. Adjust its crop and overlay below.');
 };
 $('remove-photo').onclick = () => change({ photo: '', photoName: '', backgroundMode: 'solid' });
+$('match-photo').onclick = () =>
+  action(
+    () => api.matchPhoto(),
+    'Photo colors applied. Use Undo to restore your previous palette.',
+  );
 const drop = $('photo-drop');
 for (const event of ['dragenter', 'dragover'])
   drop.addEventListener(event, (e) => {
@@ -262,21 +308,31 @@ $('restore').onclick = () =>
 $('reset').onclick = () =>
   action(() => api.reset(), 'Default settings restored. Use Undo to recover the previous look.');
 $('undo').onclick = () => action(() => api.undo(), 'Previous appearance restored.');
+$('redo').onclick = () => action(() => api.redo(), 'Appearance change reapplied.');
 $('copy').onclick = () =>
   action(
     () => api.copyTheme(),
     'Palette copied. In Codex: Settings → Appearance → Dark theme → Import.',
   );
-$('save-look').onclick = openSave;
-$('quick-save').onclick = openSave;
+$('save-look').onclick = () => openSave();
+$('quick-save').onclick = () => openSave();
+$('look-search').oninput = () => renderLooks();
 $('cancel-save').onclick = () => $('save-dialog').close();
 $('save-form').onsubmit = async (e) => {
   e.preventDefault();
   const name = $('look-name').value.trim();
   if (!name) return;
-  const result = await action(() => api.saveLook(name), 'Saved ' + name + '.');
+  const id = editingLookId;
+  $('save-submit').disabled = true;
+  const result = await action(
+    () => (id ? api.updateLook({ id, name }) : api.saveLook(name)),
+    (id ? 'Updated ' : 'Saved ') + name + '.',
+  );
+  $('save-submit').disabled = false;
   if (result) {
     $('save-dialog').close();
+    $('look-search').value = '';
+    renderLooks();
     page('looks');
   }
 };
@@ -291,6 +347,23 @@ $('close').onclick = async () => {
   api.close();
 };
 document.addEventListener('keydown', (e) => {
+  // Preserve native text-field undo while editing a name or search query.
+  const textField =
+    e.target instanceof Element &&
+    e.target.matches(
+      'input:not([type="range"]):not([type="checkbox"]):not([type="color"]), textarea, [contenteditable="true"]',
+    );
+  if (
+    e.ctrlKey &&
+    !e.altKey &&
+    !$('save-dialog').open &&
+    !textField &&
+    ['z', 'y'].includes(e.key.toLowerCase())
+  ) {
+    e.preventDefault();
+    if (e.key.toLowerCase() === 'y' || e.shiftKey) $('redo').click();
+    else $('undo').click();
+  }
   if (e.ctrlKey && e.key.toLowerCase() === 's') {
     e.preventDefault();
     if (!$('save-dialog').open) openSave();
@@ -307,6 +380,25 @@ api
     data = result;
     $('version').textContent = 'CODEX ' + data.version;
     $('app-version').textContent = 'Appearance ' + data.appVersion;
+    for (const look of data.builtIns) {
+      const button = document.createElement('button');
+      button.className = 'built-in-look';
+      button.dataset.builtIn = look.id;
+      const image = document.createElement('img');
+      image.src = '../assets/themes/' + look.id + '.jpg';
+      image.alt = '';
+      const label = document.createElement('strong');
+      label.textContent = look.name;
+      const description = document.createElement('small');
+      description.textContent = look.description;
+      button.append(image, label, description);
+      button.onclick = () =>
+        action(
+          () => api.loadBuiltIn(look.id),
+          'Applied ' + look.name + '. Use Undo to restore your previous look.',
+        );
+      $('built-in-looks').append(button);
+    }
     for (const [id, p] of Object.entries(data.presets)) {
       const button = document.createElement('button');
       button.className = 'theme-card';

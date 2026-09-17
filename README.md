@@ -1,8 +1,8 @@
 # Codex Appearance — Linux alpha
 
-An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
+An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, three included scenic looks, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental Linux x86_64 release: `0.3.0-alpha.3`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
+**Experimental Linux x86_64 release: `0.4.0-alpha.1`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
 
 ## Screenshots
 
@@ -22,13 +22,13 @@ Captured from the Linux companion and its floating preview. The sample text and 
 
 ## Try the alpha
 
-1. Download `codex-appearance-0.3.0-alpha.3-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.4.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.3.0-alpha.3-linux-x64.tar.gz
-   cd codex-appearance-0.3.0-alpha.3-linux-x64
+   tar -xzf codex-appearance-0.4.0-alpha.1-linux-x64.tar.gz
+   cd codex-appearance-0.4.0-alpha.1-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -70,15 +70,27 @@ The companion's own renderer has sandboxing, context isolation, no Node integrat
 
 ## Controls
 
-| Page        | Options                                                                             |
-| ----------- | ----------------------------------------------------------------------------------- |
-| Palettes    | Sixteen dark palettes, custom colors, contrast estimate, native theme-string export |
-| Background  | Solid, gradient, or PNG/JPEG/WebP photo; opacity; crop position; tint; photo blur   |
-| Typography  | Interface font, conversation size, code size, line spacing                          |
-| Layout      | Sidebar visibility, conversation width, reduced animation                           |
-| Saved looks | Named looks; import/export of settings and an embedded photo                        |
+| Page       | Options                                                                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Palettes   | Sixteen dark palettes, custom colors, contrast estimate, native theme-string export                                           |
+| Background | Solid, gradient, or local photo; opacity; crop; tint; blur; photo-derived colors; separate home/conversation artwork strength |
+| Typography | Interface font, conversation size, code size, line spacing                                                                    |
+| Layout     | Sidebar visibility, conversation width, reduced animation, independent surface opacity and conversation shading               |
+| Looks      | Three included scenic looks; save, search, update, import, and export your own looks                                          |
 
-**Ctrl+O** chooses a photo. **Ctrl+S** saves a look. **Undo change** recovers recent changes in the current session. Reset restores defaults while keeping saved looks. **Restore Codex style** disables the appearance layer while preserving your preferences.
+**Ctrl+O** chooses a photo. **Ctrl+S** saves a look. **Undo change** and **Redo change** navigate recent appearance changes in the current session; **Ctrl+Z**, **Ctrl+Shift+Z**, and **Ctrl+Y** work outside text fields. A new appearance edit clears redo history. Reset restores defaults while keeping saved looks. **Restore Codex style** disables the appearance layer while preserving your preferences.
+
+In Photo mode, **Match colors to photo** suggests a dark background, text, and accent palette using local image sampling. It preserves your crop, blur, opacity, and typography; Undo restores the previous colors. Photos and desktop transparency still affect actual text contrast.
+
+**Home artwork** and **Conversation artwork** independently control how strongly the photo shows on each screen. Zero covers the photo with the palette background; **Background opacity** still controls desktop transparency. Use **Home / Conversation** in the live preview, or the screen button in the floating preview, to compare both treatments.
+
+Under **Layout**, adjust sidebar, header, and input opacity independently. **Conversation shading** adds a background behind message areas. These controls change background color alpha, never text opacity. Existing looks start with these new surface controls at zero and artwork strength at 100%, preserving their appearance.
+
+The **Looks** page includes Cathedral Foundry, Arcade Signal, and Night Shift, adapted from individually MIT-licensed Codex Habitat themes. Applying one replaces appearance settings and can be undone. Their artwork and theme attribution travels with exported looks; see [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Search saved looks by name, palette, or background type. **Update** opens a dialog to replace that saved look with your current appearance and optionally rename it. Cancel leaves the saved look unchanged. Appearance undo/redo does not undo changes to the saved-look library.
+
+Styled Codex checks input visibility and pointer reachability, conversation scrolling, and horizontal overflow before and shortly after applying styles. A detected regression disables the layer and shows a notice in the companion when refreshed. These checks compare geometry, read no message text, and do not guarantee every possible layout remains correct. **Ctrl+Alt+R** remains available for manual restoration.
 
 In styled Codex, **Panels** sits beside the application menus. **Panels**, **Ctrl+B**, or **Ctrl+Alt+F** reveals the sidebar. **Ctrl+Alt+R** disables the layer. The ordinary menus and command menu remain available. Conversation width automatically fits the space beside a pinned summary, including while the panel animates. Close styled Codex and launch ordinary Codex to restore the original native window frame.
 
@@ -162,4 +174,4 @@ See [TESTING.md](TESTING.md) for results and remaining coverage, [CONTRIBUTING.m
 
 ## License
 
-The companion's source, original icons, and generated test fixtures are provided under the [MIT license](LICENSE). No Codex application files or third-party runtime binaries are included. Their licenses and terms remain separate.
+The companion's source, original icons, and generated test fixtures are provided under the [MIT license](LICENSE). The three included Habitat looks retain their [upstream MIT license](assets/themes/LICENSE) and [attribution](THIRD_PARTY_NOTICES.md). No Codex application files or third-party runtime binaries are included. Their licenses and terms remain separate.

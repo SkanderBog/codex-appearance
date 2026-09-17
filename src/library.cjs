@@ -4,8 +4,36 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const { ROOT, STATE, ASSETS, normalize, atomicJSON, assetDataURL } = require('./core.cjs');
+const bundledLooks = require('../assets/themes/catalog.json');
 const MAX_IMAGE = 20 * 1024 * 1024;
 const LOOKS = path.join(STATE, 'looks.json');
+function builtInLooks() {
+  return bundledLooks.map(({ id, name, description }) => ({ id, name, description }));
+}
+function loadBuiltIn(id) {
+  const look = bundledLooks.find((entry) => entry.id === id);
+  if (!look) throw new Error('Choose an included look.');
+  const bytes = fs.readFileSync(path.join(ROOT, 'assets/themes', look.id + '.jpg'));
+  if (crypto.createHash('sha256').update(bytes).digest('hex') !== look.sha256)
+    throw new Error('This included background is damaged. Download a fresh copy of the companion.');
+  const photo = importPhoto(bytes, look.name);
+  const attribution =
+    `Artwork and theme colors: ${look.name}, Codex Habitat contributors.\nSource: https://github.com/wp-a/CodexHabitat/tree/71a38c09610432d91c582006867b82ffd8fd8529\nAdapted for Codex Appearance.\n\n` +
+    fs.readFileSync(path.join(ROOT, 'assets/themes/LICENSE'), 'utf8');
+  atomicJSON(path.join(ASSETS, photo.photo + '.attribution.json'), attribution);
+  return { ...look.settings, ...photo, enabled: true };
+}
+function photoAttribution(id) {
+  if (!assetDataURL(id)) return '';
+  try {
+    const file = path.join(ASSETS, id + '.attribution.json');
+    if (!fs.lstatSync(file).isFile() || fs.statSync(file).size > 24000) return '';
+    const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return typeof value === 'string' && value.length <= 10000 ? value : '';
+  } catch {
+    return '';
+  }
+}
 function readLooks() {
   try {
     const data = JSON.parse(fs.readFileSync(LOOKS, 'utf8'));
@@ -39,6 +67,34 @@ function deleteLook(id) {
     LOOKS,
     readLooks().filter((x) => x.id !== id),
   );
+}
+function updateLook(id, name, settings) {
+  if (typeof name !== 'string' || !name.trim()) throw new Error('Give this look a name first.');
+  const looks = readLooks();
+  const index = looks.findIndex((look) => look.id === id);
+  if (index < 0) throw new Error('This look could not be found.');
+  looks[index] = { ...looks[index], name: name.trim().slice(0, 60), settings: normalize(settings) };
+  atomicJSON(LOOKS, looks);
+  return looks[index];
+}
+function photoPalette(id) {
+  const photo = assetDataURL(id);
+  if (!photo) throw new Error('Choose a photo before matching its colors.');
+  const result = spawnSync(
+    process.env.COMPANION_PYTHON || 'python3',
+    [path.join(ROOT, 'scripts/prepare-photo.py'), '--palette'],
+    {
+      input: Buffer.from(photo.slice('data:image/jpeg;base64,'.length), 'base64'),
+      maxBuffer: MAX_IMAGE,
+      timeout: 15000,
+    },
+  );
+  if (result.error || result.status !== 0)
+    throw new Error('The photo colors could not be read. Try choosing the photo again.');
+  const colors = JSON.parse(result.stdout.toString());
+  if (!['background', 'foreground', 'accent'].every((key) => /^#[0-9A-F]{6}$/.test(colors[key])))
+    throw new Error('The photo did not produce a valid palette.');
+  return { background: colors.background, foreground: colors.foreground, accent: colors.accent };
 }
 function decodeBase64(text) {
   if (
@@ -87,7 +143,8 @@ function importPhoto(bytes, name) {
 }
 function exportLook(name, settings) {
   const s = normalize(settings),
-    photo = assetDataURL(s.photo);
+    photo = assetDataURL(s.photo),
+    attribution = photo ? photoAttribution(s.photo) : '';
   // Filenames can contain names, places, or dates. Portable looks use a neutral label.
   s.photoName = photo ? 'Background photo' : '';
   return (
@@ -98,6 +155,7 @@ function exportLook(name, settings) {
         name: String(name || 'My look').slice(0, 60),
         settings: s,
         ...(photo ? { photo } : {}),
+        ...(attribution ? { photoAttribution: attribution } : {}),
       },
       null,
       2,
@@ -123,6 +181,11 @@ function importLook(text) {
   )
     throw new Error('Choose a look exported by Codex Appearance.');
   const settings = normalize({ ...data.settings, photo: '', photoName: '' });
+  if (
+    data.photoAttribution !== undefined &&
+    (typeof data.photoAttribution !== 'string' || data.photoAttribution.length > 10000)
+  )
+    throw new Error('The photo attribution in this look is not supported.');
   if (data.photo) {
     if (typeof data.photo !== 'string' || !data.photo.startsWith('data:image/jpeg;base64,'))
       throw new Error('The photo in this look is not supported.');
@@ -131,6 +194,8 @@ function importLook(text) {
       importPhoto(decodeBase64(data.photo.slice(23)), data.settings.photoName || 'Imported photo'),
     );
     settings.backgroundMode = normalize(data.settings).backgroundMode;
+    if (data.photoAttribution)
+      atomicJSON(path.join(ASSETS, settings.photo + '.attribution.json'), data.photoAttribution);
   }
   return {
     name:
@@ -139,10 +204,14 @@ function importLook(text) {
   };
 }
 module.exports = {
+  builtInLooks,
+  loadBuiltIn,
   MAX_IMAGE,
   readLooks,
   saveLook,
   deleteLook,
+  updateLook,
+  photoPalette,
   decodeBase64,
   imageFormat,
   importPhoto,

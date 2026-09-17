@@ -6,6 +6,10 @@ Settings and saved looks are JSON files; imported photos are stored locally. Sta
 
 Photos are re-encoded to JPEG with EXIF metadata removed. Portable look exports use a neutral photo filename, but contain the visible photo and the chosen look name. Inspect both before sharing. Clearing the current background keeps stored photos so saved looks still work.
 
+Photo-derived colors are calculated locally. Included theme artwork is shipped with the companion and needs no download. Exported looks may also contain photo attribution text and its license; imported attribution is retained when re-exporting. Review that text along with the image before sharing.
+
+Layout checks collect only visibility, pointer reachability, scroll geometry, and overflow measurements. They do not collect message text. A failed check records fixed failure codes in the existing local bridge diagnostic file.
+
 The bridge does not record conversation/window titles. Local startup errors can contain paths. Explicit GUI diagnostics can capture the visible Codex window, including account or task information. Review and redact any diagnostic output before sharing it. The public bug template asks for a small setup report rather than account profiles or screenshots.
 
 Public packages are built from an explicit manifest. Private runtime copies, profiles, photos, settings, logs, screenshots, environment files, development tool metadata, and Git metadata are not packaged. Archive user/group names are blank and numeric ownership is zero. The initial public Git history is created only from reviewed source and uses GitHub no-reply commit attribution.

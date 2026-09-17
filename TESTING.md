@@ -6,7 +6,18 @@ Automated coverage includes settings validation, injection/path rejection, all p
 
 GUI self-tests exercise actual controls, drag-and-drop image import, resizing, alpha rendering, saved-look import/export, undo, reset, and layout. An optional integration check exercises real Codex without sending prompts. Reports and screenshots stay local.
 
-## Local release results (2026-09-17)
+## 0.4.0-alpha.1 release results (2026-09-17)
+
+- All 17 Node and 21 Python regression tests passed, including schema migration, saved-look replacement, photo-derived palettes, bundled-asset hashes, attribution export/import, and layout-regression comparisons.
+- All 44 graphical companion assertions passed: undo/redo, photo matching, saved-look search and updates, three included looks, separate home/conversation artwork, surface shading, embedded and floating previews, and the 900 × 620 minimum window size.
+- All 25 real-Codex integration assertions passed, including 132 conversation-width fixtures, pointer access to Panels, independent surface opacity, nested-message shading, and automatic recovery from a deliberately obstructed input. No prompts were sent.
+- Both native file-dialog checks (open and save) passed with generated fixtures.
+- The source-only archive was extracted into a fresh path containing spaces. Dependency installation, regression and syntax checks, formatting, the 66-file release audit, graphical checks, and real-Codex integration checks passed from that extracted copy with isolated temporary state.
+- The included-look and surface-control screenshots were inspected. The three bundled backgrounds were reviewed, their MIT licenses retained, and image metadata audited. Raw diagnostics remain private.
+- The companion adds no runtime dependencies. The npm audit reported zero known vulnerabilities. Release archives are checked for deterministic contents and private-data exclusion.
+- Palette contrast checks cover suggested solid colors; photos and desktop transparency can change actual readability. Layout recovery detects the checked geometry regressions after applying styles, not every possible future layout problem.
+
+## 0.3.0 alpha release results (2026-09-17)
 
 - 14 Node regression tests and 20 Python regression tests passed.
 - JavaScript/shell syntax and source formatting checks passed.

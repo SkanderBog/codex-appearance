@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Decode and normalize a local photo, with a size check before pixel decoding."""
 import io
+import json
 import sys
 import warnings
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageStat
 Image.MAX_IMAGE_PIXELS = 40_000_000
 warnings.simplefilter('error', Image.DecompressionBombWarning)
 try:
+    if sys.argv[1:] not in ([], ['--palette']):
+        raise ValueError('Unsupported photo operation.')
     data = sys.stdin.buffer.read(20 * 1024 * 1024 + 1)
     if len(data) > 20 * 1024 * 1024:
         raise ValueError('Choose an image under 20 MB.')
@@ -27,7 +30,19 @@ try:
         image = matte
     else:
         image = image.convert('RGB')
-    image.save(sys.stdout.buffer, format='JPEG', quality=88, optimize=True)
+    if sys.argv[1:] == ['--palette']:
+        # Sample locally and keep suggestions dark, like the companion's presets.
+        image.thumbnail((64, 64), resampling.LANCZOS)
+        average = ImageStat.Stat(image).mean
+        def color(base, weight):
+            return '#' + ''.join(f'{round(base + channel * weight):02X}' for channel in average)
+        print(json.dumps({
+            'background': color(10, 0.08),
+            'foreground': '#F2F5F7',
+            'accent': color(145, 0.40),
+        }))
+    else:
+        image.save(sys.stdout.buffer, format='JPEG', quality=88, optimize=True)
 except Exception as error:
     print(str(error) if isinstance(error, ValueError) else 'This image could not be opened. Try a different photo.', file=sys.stderr)
     sys.exit(1)

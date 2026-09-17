@@ -7,6 +7,7 @@ const { ROOT, ASSETS, readSettings, saveSettings } = require('./core.cjs');
 const { nativeImage } = require('electron');
 const { importPhoto } = require('./library.cjs');
 const { evaluate } = require('./evaluate.cjs');
+const { healthScript, layoutFailures } = require('./layout-health.cjs');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function integrationCheck(win, update) {
   const original = readSettings();
@@ -45,6 +46,15 @@ async function integrationCheck(win, update) {
       composerHeight:document.querySelector('[contenteditable="true"],textarea')?.getBoundingClientRect().height };
   })()`,
     );
+  const waitForState = async (predicate) => {
+    let state;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      state = await getState();
+      if (predicate(state)) return state;
+      await sleep(250);
+    }
+    return state;
+  };
   try {
     let ready;
     for (let attempt = 0; attempt < 40; attempt++) {
@@ -66,8 +76,9 @@ async function integrationCheck(win, update) {
       backgroundMode: 'solid',
       opacity: 0.6,
     });
-    await sleep(900); // Verify the file watcher, not just a direct update call.
-    let state = await getState();
+    // Startup can queue renderer work. Wait for the watcher-driven result rather
+    // than assuming that a fixed delay proves the settings have reached Codex.
+    let state = await waitForState((value) => value.background === 'rgba(27, 21, 16, 0.6)');
     check(
       'Real Codex responds to companion settings',
       state.background === 'rgba(27, 21, 16, 0.6)',
@@ -80,6 +91,7 @@ async function integrationCheck(win, update) {
       state,
     );
     check('The whole UI is not faded', state.opacity === '1', state.opacity);
+    await update(); // Drain startup styling work before testing user interactions.
     const control = await evaluate(
       win.webContents,
       `(() => {
@@ -122,8 +134,7 @@ async function integrationCheck(win, update) {
       button: 'left',
       clickCount: 1,
     });
-    await sleep(300);
-    state = await getState();
+    state = await waitForState((value) => value.sidebar !== 'none' && value.sidebarWidth > 100);
     check(
       'Panels button restores actual navigation',
       state.sidebar !== 'none' && state.sidebarWidth > 100,
@@ -132,8 +143,7 @@ async function integrationCheck(win, update) {
     // Verify the real keyboard handler as well as the injected button.
     win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'b', modifiers: ['control'] });
     win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'b', modifiers: ['control'] });
-    await sleep(300);
-    state = await getState();
+    state = await waitForState((value) => value.sidebar === 'none');
     check('Ctrl+B hides the sidebar again', state.sidebar === 'none', state);
     const shot = await win.webContents.capturePage();
     fs.writeFileSync(path.join(OUTPUT, 'codex-test.png'), shot.toPNG());
@@ -172,7 +182,7 @@ async function integrationCheck(win, update) {
       contentWidth: 'full',
       reducedMotion: true,
     });
-    await sleep(900);
+    await update();
     const photoState = await evaluate(
       win.webContents,
       `(() => {const p=getComputedStyle(document.body,'::before');return {hasPhoto:p.backgroundImage.includes('data:image/jpeg;base64,'),opacity:p.opacity,blur:p.filter,bodyOpacity:getComputedStyle(document.body).opacity,animation:getComputedStyle(document.body).animationDuration};})()`,
@@ -233,7 +243,7 @@ async function integrationCheck(win, update) {
       gradientColor: '#446688',
       gradientAngle: 70,
     });
-    await sleep(700);
+    await update();
     const gradient = await evaluate(
       win.webContents,
       `getComputedStyle(document.body,'::before').backgroundImage`,
@@ -242,6 +252,115 @@ async function integrationCheck(win, update) {
       'Gradient background also works inside Codex',
       gradient.includes('70deg') && gradient.includes('68, 102, 136'),
       gradient,
+    );
+    saveSettings({
+      ...readSettings(),
+      backgroundMode: 'photo',
+      homePhotoStrength: 1,
+      taskPhotoStrength: 0,
+      sidebarOpacity: 0.7,
+      headerOpacity: 0.6,
+      composerOpacity: 0.9,
+      readingOpacity: 0.55,
+    });
+    await update();
+    const surfaces = await evaluate(
+      win.webContents,
+      `(() => {
+      const selectors = ['.app-shell-left-panel', '[class*="_ApplicationMenuTopBar_"]', '[data-codex-composer-root]'];
+      const surfaces = selectors.map(selector => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element); return { background:style.backgroundColor, opacity:style.opacity };
+      });
+      const message = document.createElement('article'); message.dataset.contentSearchUnitKey = 'companion-fixture';
+      message.textContent = 'Local appearance fixture'; document.body.append(message);
+      const nested = document.createElement('div'); nested.dataset.contentSearchUnitKey = 'nested-fixture'; message.append(nested);
+      const reading = getComputedStyle(message).backgroundColor, nestedReading = getComputedStyle(nested).backgroundColor; message.remove();
+      return { surfaces, reading, nestedReading, route:document.documentElement.dataset.companionRoute,
+        home:!!document.querySelector('[data-testid="home-icon"]'),
+        cover:Number(getComputedStyle(document.body).getPropertyValue('--companion-photo-cover')) };
+    })()`,
+    );
+    check(
+      'Independent sidebar, header and input surfaces reach Codex',
+      surfaces.surfaces.every(
+        (value, index) =>
+          value &&
+          value.opacity === '1' &&
+          value.background.endsWith([', 0.7)', ', 0.6)', ', 0.9)'][index]),
+      ),
+      surfaces.surfaces,
+    );
+    check(
+      'Conversation shading uses the reviewed message marker',
+      surfaces.reading.endsWith(', 0.55)') && surfaces.nestedReading === 'rgba(0, 0, 0, 0)',
+      { outer: surfaces.reading, nested: surfaces.nestedReading },
+    );
+    check(
+      'Actual route selects the matching artwork strength',
+      surfaces.route === (surfaces.home ? 'home' : 'task') &&
+        Math.abs(surfaces.cover - (surfaces.home ? 0.3 : 1)) < 0.001,
+      { route: surfaces.route, cover: surfaces.cover },
+    );
+    const healthy = await evaluate(win.webContents, healthScript);
+    check(
+      'Styled input remains reachable and conversation scroll remains usable',
+      healthy.inputVisible && healthy.inputReachable && healthy.scrollable,
+      healthy,
+    );
+    fs.writeFileSync(
+      path.join(OUTPUT, 'codex-surfaces.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+
+    // Deliberately obstruct the input only while our test style is installed.
+    // The same production guard must disable styling and remove its controls.
+    await evaluate(
+      win.webContents,
+      `(() => {
+      const style = document.getElementById('companion-appearance-style');
+      window.__companionTestObserver = new MutationObserver(() => {
+        document.getElementById('companion-test-obstruction')?.remove();
+        if (!style.textContent) return;
+        const input = document.querySelector('[data-codex-composer-root] [contenteditable="true"], [data-codex-composer-root] textarea');
+        const rect = input.getBoundingClientRect();
+        const overlay = document.createElement('div'); overlay.id = 'companion-test-obstruction';
+        overlay.style.cssText = 'position:fixed;z-index:2147483647;background:transparent;left:'+rect.left+'px;top:'+rect.top+'px;width:'+rect.width+'px;height:'+rect.height+'px';
+        document.body.append(overlay);
+      });
+      window.__companionTestObserver.observe(style, {childList:true});
+    })()`,
+    );
+    try {
+      await update();
+      const recovered = await getState();
+      const recoveredHealth = await evaluate(win.webContents, healthScript);
+      check(
+        'Layout guard automatically disables and removes an obstructing style',
+        !readSettings().enabled &&
+          !recovered.layer &&
+          !recovered.controls &&
+          recoveredHealth.inputReachable,
+        {
+          enabled: readSettings().enabled,
+          layer: recovered.layer,
+          controls: recovered.controls,
+          inputReachable: recoveredHealth.inputReachable,
+        },
+      );
+    } finally {
+      await evaluate(
+        win.webContents,
+        `window.__companionTestObserver?.disconnect(); delete window.__companionTestObserver; document.getElementById('companion-test-obstruction')?.remove()`,
+      );
+    }
+    saveSettings({ ...readSettings(), enabled: true });
+    await update();
+    check(
+      'Re-enabling a valid look passes the health guard',
+      layoutFailures(healthy, await evaluate(win.webContents, healthScript)).length === 0 &&
+        readSettings().enabled,
     );
     // Exercise the supported renderer's width classes in isolated layout fixtures.
     // No task contents or account identifiers are included in the report.
@@ -299,7 +418,7 @@ async function integrationCheck(win, update) {
       );
     }
     saveSettings({ ...original, enabled: false });
-    await sleep(700);
+    await update();
     state = await getState();
     check(
       'Restore removes styles and companion controls',

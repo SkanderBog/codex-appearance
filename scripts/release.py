@@ -58,7 +58,7 @@ def audit(root=ROOT, deny=()):
     for name in names:
         data = (root / name).read_bytes()
         failures.extend(scan_bytes(name, data, deny))
-        if name.endswith(('.png', '.webp')):
+        if name.endswith(('.png', '.webp', '.jpg', '.jpeg')):
             from PIL import Image
             with Image.open(io.BytesIO(data)) as image:
                 if image.getexif() or any(k.lower() in {'xmp', 'comment', 'description', 'author', 'exif'} for k in image.info):

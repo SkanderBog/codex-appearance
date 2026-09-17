@@ -37,7 +37,7 @@ const FONTS = Object.freeze({
   serif: 'DejaVu Serif',
 });
 const DEFAULTS = Object.freeze({
-  version: 2,
+  version: 3,
   preset: 'graphite',
   customColors: false,
   background: '#11171C',
@@ -52,6 +52,12 @@ const DEFAULTS = Object.freeze({
   photoY: 50,
   photoTint: 0.35,
   photoBlur: 0,
+  homePhotoStrength: 1,
+  taskPhotoStrength: 1,
+  sidebarOpacity: 0,
+  headerOpacity: 0,
+  composerOpacity: 0,
+  readingOpacity: 0,
   gradientColor: '#2A4A54',
   gradientAngle: 135,
   font: 'mono',
@@ -87,6 +93,12 @@ function normalize(value = {}) {
     ['photoY', 0, 100],
     ['photoTint', 0, 0.9],
     ['photoBlur', 0, 24],
+    ['homePhotoStrength', 0, 1],
+    ['taskPhotoStrength', 0, 1],
+    ['sidebarOpacity', 0, 1],
+    ['headerOpacity', 0, 1],
+    ['composerOpacity', 0, 1],
+    ['readingOpacity', 0, 1],
     ['gradientAngle', 0, 360],
   ]) {
     const n = value[k];
@@ -129,14 +141,12 @@ function atomicJSON(file, value) {
 function saveSettings(value) {
   const result = normalize(value);
   // Preserve the first pre-upgrade settings, even if the machine loses power during migration.
-  if (fs.existsSync(SETTINGS) && !fs.existsSync(path.join(STATE, 'appearance-v1-backup.json'))) {
+  if (fs.existsSync(SETTINGS)) {
     try {
-      if (JSON.parse(fs.readFileSync(SETTINGS, 'utf8')).version === 1)
-        fs.copyFileSync(
-          SETTINGS,
-          path.join(STATE, 'appearance-v1-backup.json'),
-          fs.constants.COPYFILE_EXCL,
-        );
+      const oldVersion = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')).version;
+      const backup = path.join(STATE, `appearance-v${oldVersion}-backup.json`);
+      if ([1, 2].includes(oldVersion) && !fs.existsSync(backup))
+        fs.copyFileSync(SETTINGS, backup, fs.constants.COPYFILE_EXCL);
     } catch {}
   }
   atomicJSON(SETTINGS, result);
@@ -168,7 +178,7 @@ function cssFor(value, { codex = false, embedded = false } = {}) {
   const alpha = s.enabled ? s.opacity : 1;
   const photo = s.backgroundMode === 'photo' ? assetDataURL(s.photo) : '';
   const image = photo
-    ? `linear-gradient(rgba(${rgb(p.background)}, ${s.photoTint}), rgba(${rgb(p.background)}, ${s.photoTint})), url("${photo}")`
+    ? `linear-gradient(rgba(${rgb(p.background)}, var(--companion-photo-cover)), rgba(${rgb(p.background)}, var(--companion-photo-cover))), url("${photo}")`
     : s.backgroundMode === 'gradient'
       ? `linear-gradient(${s.gradientAngle}deg, ${p.background}, ${s.gradientColor})`
       : '';
@@ -177,10 +187,36 @@ function cssFor(value, { codex = false, embedded = false } = {}) {
   const surface = embedded ? '#sampleWindow' : codex ? 'body' : '.terminal';
   const font = `'${FONTS[s.font]}', ${['sans', 'serif'].includes(s.font) ? (s.font === 'sans' ? 'sans-serif' : 'serif') : 'monospace'}`;
   let css = `${scope} { --companion-bg:${bg}; --companion-solid:${p.background}; --companion-fg:${p.foreground}; --companion-accent:${p.accent}; --companion-font-size:${s.fontSize}px; --companion-font:${font}; --companion-line-height:${s.lineHeight}; --companion-code-size:${s.codeSize}px; color-scheme:dark; }
+${scope} { --companion-photo-cover:${1 - s.taskPhotoStrength * (1 - s.photoTint)}; }
+${codex ? 'html[data-companion-route="home"]' : embedded ? '#sampleWindow[data-preview-route="home"]' : 'html[data-preview-route="home"]'} { --companion-photo-cover:${1 - s.homePhotoStrength * (1 - s.photoTint)}; }
 ${embedded ? '' : 'html, body { background: transparent !important; } body { color:var(--companion-fg); }'}
 ${surface} { background: var(--companion-bg) !important; position:relative; isolation:isolate; }
 ${image ? `${surface}::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background-color:${p.background}; background-image:${image}; background-size:${s.photoFit}; background-position:${s.photoX}% ${s.photoY}%; background-repeat:no-repeat; opacity:${alpha}; ${photo && s.photoBlur ? `filter:blur(${s.photoBlur}px);` : ''} }` : ''}
 `;
+  const surfaces = codex
+    ? [
+        '.app-shell-left-panel',
+        '[class*="_ApplicationMenuTopBar_"]',
+        '[data-codex-composer-root]',
+        '[data-content-search-unit-key]:not([data-content-search-unit-key] [data-content-search-unit-key])',
+      ]
+    : embedded
+      ? [
+          '#sample-sidebar',
+          '#sampleWindow .sample-bar',
+          '#sampleWindow .sample-input',
+          '#sampleWindow .sample-answer',
+        ]
+      : ['.preview-sidebar', '.terminal > header', '.terminal .input', '.terminal .sample-answer'];
+  for (const [index, key] of [
+    'sidebarOpacity',
+    'headerOpacity',
+    'composerOpacity',
+    'readingOpacity',
+  ].entries()) {
+    if (s.enabled && s[key] > 0)
+      css += `${surfaces[index]} { background-color:rgba(${rgb(p.background)}, ${s[key]}) !important; }\n`;
+  }
   if (!codex) return css;
   css += `:root, :root body, :root .electron-dark, :root .electron-light {
  --color-background-surface:transparent !important; --color-background-surface-under:transparent !important;

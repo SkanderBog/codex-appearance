@@ -1,0 +1,71 @@
+[
+  {
+    "id": "workbench",
+    "name": "Cathedral Foundry",
+    "description": "Warm industrial architecture",
+    "sha256": "4bb92d4a6808b17443ee3ce7cae1cfae8150df1427045db1180563f10b213800",
+    "settings": {
+      "customColors": true,
+      "background": "#171A21",
+      "foreground": "#F7FBFF",
+      "accent": "#FF7A18",
+      "photoX": 82,
+      "photoY": 50,
+      "photoBlur": 8,
+      "photoTint": 0.15,
+      "homePhotoStrength": 0.85,
+      "taskPhotoStrength": 0.56,
+      "sidebarOpacity": 0.74,
+      "headerOpacity": 0.64,
+      "composerOpacity": 0.84,
+      "readingOpacity": 0.68
+    },
+    "sourceSha256": "4bb92d4a6808b17443ee3ce7cae1cfae8150df1427045db1180563f10b213800"
+  },
+  {
+    "id": "arcade-signal",
+    "name": "Arcade Signal",
+    "description": "Neon color and arcade scenery",
+    "sha256": "82ce85a8eafd5579ef111c13bbfd56a6d397405b4d861575b915dd22d9ed9771",
+    "settings": {
+      "customColors": true,
+      "background": "#121023",
+      "foreground": "#FFF8F0",
+      "accent": "#FF2D95",
+      "photoX": 82,
+      "photoY": 52,
+      "photoBlur": 4,
+      "photoTint": 0.15,
+      "homePhotoStrength": 0.85,
+      "taskPhotoStrength": 0.54,
+      "sidebarOpacity": 0.7,
+      "headerOpacity": 0.58,
+      "composerOpacity": 0.86,
+      "readingOpacity": 0.66
+    },
+    "sourceSha256": "82ce85a8eafd5579ef111c13bbfd56a6d397405b4d861575b915dd22d9ed9771"
+  },
+  {
+    "id": "night-shift",
+    "name": "Night Shift",
+    "description": "Violet light for late work",
+    "sha256": "f682984639c369156055e329a1ad28b0ad743cfde90c06fde5d4bd75091f309f",
+    "settings": {
+      "customColors": true,
+      "background": "#100D1E",
+      "foreground": "#FFF7FF",
+      "accent": "#B94DFF",
+      "photoX": 80,
+      "photoY": 42,
+      "photoBlur": 10,
+      "photoTint": 0.15,
+      "homePhotoStrength": 0.83,
+      "taskPhotoStrength": 0.5,
+      "sidebarOpacity": 0.72,
+      "headerOpacity": 0.6,
+      "composerOpacity": 0.84,
+      "readingOpacity": 0.66
+    },
+    "sourceSha256": "da033301de3b8158d1d967625ecf0869dae39368ef42e8df72a1bea1b31b4133"
+  }
+]

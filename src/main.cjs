@@ -12,6 +12,7 @@ const {
   DEFAULTS,
   assetDataURL,
   readSettings,
+  normalize,
   saveSettings,
   cssFor,
   themeString,
@@ -20,6 +21,7 @@ const library = require('./library.cjs');
 const dialog = require('./file-dialogs.cjs');
 const { RUNTIME } = require('./paths.cjs');
 const history = [];
+const future = [];
 let lastChange = 0;
 fs.mkdirSync(STATE, { recursive: true, mode: 0o700 });
 app.setName('Codex Appearance Companion');
@@ -94,6 +96,12 @@ function handle(channel, handler) {
 }
 function snapshot() {
   const settings = readSettings();
+  let layoutRestored = false;
+  try {
+    const bridge = JSON.parse(fs.readFileSync(path.join(STATE, 'codex-bridge.json'), 'utf8'));
+    layoutRestored =
+      !settings.enabled && bridge.windows?.some((win) => win.healthFailures?.length > 0);
+  } catch {}
   return {
     settings,
     presets: PRESETS,
@@ -101,19 +109,25 @@ function snapshot() {
     previewCSS: cssFor(settings, { embedded: true }),
     photoData: assetDataURL(settings.photo),
     looks: library.readLooks(),
+    builtIns: library.builtInLooks(),
+    layoutRestored: !!layoutRestored,
     canUndo: history.length > 0,
+    canRedo: future.length > 0,
     appVersion: require('../package.json').version,
     version: JSON.parse(fs.readFileSync(path.join(RUNTIME, 'source.json'), 'utf8')).version,
   };
 }
 function commit(patch, force = false) {
   const before = readSettings();
+  const next = normalize({ ...before, ...patch });
+  if (JSON.stringify(before) === JSON.stringify(next)) return snapshot();
+  const saved = saveSettings(next);
   if (force || Date.now() - lastChange > 600) {
     history.push(before);
     if (history.length > 30) history.shift();
   }
   lastChange = Date.now();
-  const saved = saveSettings({ ...before, ...patch });
+  future.length = 0;
   notify(saved);
   return snapshot();
 }
@@ -124,14 +138,35 @@ handle('appearance:save', (patch) =>
 handle('appearance:restore', () => commit({ enabled: false }, true));
 handle('appearance:reset', () => commit(DEFAULTS, true));
 handle('appearance:undo', () => {
-  const previous = history.pop();
+  const previous = history.at(-1);
   if (previous) {
+    const current = readSettings();
     saveSettings(previous);
+    history.pop();
+    future.push(current);
     notify(previous);
   }
   lastChange = 0;
   return snapshot();
 });
+handle('appearance:redo', () => {
+  const next = future.at(-1);
+  if (next) {
+    const current = readSettings();
+    saveSettings(next);
+    future.pop();
+    history.push(current);
+    notify(next);
+  }
+  lastChange = 0;
+  return snapshot();
+});
+handle('appearance:match-photo', () =>
+  commit(
+    { ...library.photoPalette(readSettings().photo), customColors: true, enabled: true },
+    true,
+  ),
+);
 handle('appearance:pick-photo', async () => {
   const result = await dialog.showOpenDialog(control, {
     title: 'Choose a background photo',
@@ -165,11 +200,20 @@ handle('appearance:save-look', (name) => {
   library.saveLook(name, readSettings());
   return snapshot();
 });
+handle('appearance:update-look', (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Choose a saved look to update.');
+  library.updateLook(value.id, value.name, readSettings());
+  return snapshot();
+});
 handle('appearance:load-look', (id) => {
   const look = library.readLooks().find((x) => x.id === id);
   if (!look) throw new Error('This look could not be found.');
   return commit({ ...look.settings, enabled: true }, true);
 });
+handle('appearance:load-built-in', (id) =>
+  commit({ ...DEFAULTS, ...library.loadBuiltIn(id) }, true),
+);
 handle('appearance:delete-look', (id) => {
   library.deleteLook(id);
   return snapshot();

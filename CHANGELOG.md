@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0-alpha.1
+
+- Add independent home and conversation artwork strength, including an option to hide artwork on either screen.
+- Add independent sidebar, header, input, and conversation shading controls without fading text.
+- Include Cathedral Foundry, Arcade Signal, and Night Shift using MIT-licensed Habitat backgrounds and adapted theme data, with portable attribution.
+- Check input reachability, scrolling, and horizontal overflow after style application; disable the appearance layer when those checks detect a regression.
+- Preview home and conversation artwork in both preview windows; migrate existing settings without changing their appearance.
+
+- Suggest a dark palette from a local photo with one undoable action.
+- Add redo and appearance undo/redo keyboard shortcuts outside text fields.
+- Search saved looks by name, palette, or background type.
+- Update and rename an existing saved look without creating a duplicate.
+
 ## 0.3.0-alpha.3
 
 - Move Panels into the application menu bar so it stays clear of native window controls and text.

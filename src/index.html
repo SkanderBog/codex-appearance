@@ -32,9 +32,10 @@
           <button class="nav-item" data-page="background"><span>▧</span> Background</button>
           <button class="nav-item" data-page="typography"><span>Aa</span> Typography</button>
           <button class="nav-item" data-page="layout"><span>▤</span> Layout</button>
-          <button class="nav-item" data-page="looks"><span>◇</span> Saved looks</button>
+          <button class="nav-item" data-page="looks"><span>◇</span> Looks</button>
           <div class="nav-bottom">
             <button id="undo" class="quiet" disabled>↶ Undo change</button
+            ><button id="redo" class="quiet" disabled>↷ Redo change</button
             ><button id="restore" class="quiet">Restore Codex style</button
             ><span class="version" id="version"></span
             ><span class="version" id="app-version"></span>
@@ -104,6 +105,10 @@
                 <span id="photo-name">No photo selected</span
                 ><button id="remove-photo" class="text-button">Remove</button>
               </div>
+              <button id="match-photo" class="secondary" disabled>Match colors to photo</button>
+              <p class="helper">
+                Suggest a dark palette from this photo. Undo restores your previous colors.
+              </p>
               <label class="select-row" for="photoFit"
                 >Fit<select id="photoFit">
                   <option value="cover">Fill window</option>
@@ -130,6 +135,20 @@
                 >Photo blur <output id="photoBlur-value"></output></label
               ><input id="photoBlur" type="range" min="0" max="24" />
               <p class="helper">Only the photo is blurred. Text stays sharp.</p>
+              <div class="divider"></div>
+              <h2 class="collection-heading">Artwork by screen</h2>
+              <label class="range-label" for="homePhotoStrength"
+                >Home artwork <output id="homePhotoStrength-value"></output
+              ></label>
+              <input id="homePhotoStrength" type="range" min="0" max="100" />
+              <label class="range-label" for="taskPhotoStrength"
+                >Conversation artwork <output id="taskPhotoStrength-value"></output
+              ></label>
+              <input id="taskPhotoStrength" type="range" min="0" max="100" />
+              <p class="helper">
+                Keep the home screen vivid and conversations quieter. Zero hides the artwork on that
+                screen; desktop opacity stays separate.
+              </p>
             </div>
             <div class="privacy-note">
               ⌁ Photos are copied to this app’s local storage.<br />No upload service or account is
@@ -183,6 +202,28 @@
                 ><strong>Reduce motion</strong><small>Minimize interface animations</small></span
               ><input id="reducedMotion" type="checkbox" role="switch"
             /></label>
+            <div class="divider"></div>
+            <h2 class="collection-heading">Readable surfaces</h2>
+            <label class="range-label" for="sidebarOpacity"
+              >Sidebar opacity <output id="sidebarOpacity-value"></output
+            ></label>
+            <input id="sidebarOpacity" type="range" min="0" max="100" />
+            <label class="range-label" for="headerOpacity"
+              >Header opacity <output id="headerOpacity-value"></output
+            ></label>
+            <input id="headerOpacity" type="range" min="0" max="100" />
+            <label class="range-label" for="composerOpacity"
+              >Input opacity <output id="composerOpacity-value"></output
+            ></label>
+            <input id="composerOpacity" type="range" min="0" max="100" />
+            <label class="range-label" for="readingOpacity"
+              >Conversation shading <output id="readingOpacity-value"></output
+            ></label>
+            <input id="readingOpacity" type="range" min="0" max="100" />
+            <p class="helper">
+              These controls add your palette's background color behind each area. Text stays fully
+              opaque.
+            </p>
             <div class="info-card compact">
               <strong>Features stay within reach.</strong>
               <p>
@@ -196,10 +237,22 @@
           <section class="page" id="page-looks" hidden>
             <div class="eyebrow">05 / YOUR COLLECTION</div>
             <h1>Keep your favorites.</h1>
-            <p class="description">Save a whole look, including its photo and layout.</p>
+            <p class="description">Start with a scene, or save your own photo and layout.</p>
+            <h2 class="collection-heading">Included looks</h2>
+            <div id="built-in-looks" class="built-in-looks"></div>
+            <p class="helper">Artwork and theme colors by Codex Habitat contributors · MIT.</p>
+            <div class="divider"></div>
+            <h2 class="collection-heading">Your saved looks</h2>
             <button id="save-look" class="primary full-width">
               ＋ Save current look <kbd>Ctrl S</kbd>
             </button>
+            <label class="field-label" for="look-search">Find a saved look</label>
+            <input
+              id="look-search"
+              type="search"
+              placeholder="Search names or palettes"
+              autocomplete="off"
+            />
             <div id="looks" class="looks"></div>
             <div class="divider"></div>
             <div class="paired">
@@ -219,9 +272,13 @@
               ><input id="enabled" type="checkbox" role="switch" />Style active</label
             >
           </div>
+          <div class="segmented preview-routes" aria-label="Preview screen">
+            <button data-preview-route="home" aria-pressed="false">Home</button>
+            <button data-preview-route="task" aria-pressed="true">Conversation</button>
+          </div>
           <div class="preview-stage">
             <div class="stage-orbit"></div>
-            <div id="sampleWindow" class="sample-window">
+            <div id="sampleWindow" class="sample-window" data-preview-route="task">
               <div class="sample-bar">
                 <span>&gt;_ codex</span
                 ><button id="sample-panels" title="Toggle sample sidebar">Panels</button>
@@ -262,6 +319,10 @@
             The floating preview shows real desktop transparency. Styled Codex opens a separate UI
             profile using your existing account and tasks.
           </p>
+          <p id="safety-note" class="helper" role="status" hidden>
+            Styling was paused after a layout check failed. Adjust your look before enabling it
+            again.
+          </p>
         </aside>
       </div>
       <footer>
@@ -274,8 +335,8 @@
     <dialog id="save-dialog">
       <form id="save-form">
         <div class="eyebrow">YOUR COLLECTION</div>
-        <h2>Name this look.</h2>
-        <p>Colors, background, typography, and layout, together.</p>
+        <h2 id="save-title">Name this look.</h2>
+        <p id="save-description">Colors, background, typography, and layout, together.</p>
         <label class="field-label" for="look-name">Look name</label
         ><input
           id="look-name"
@@ -286,7 +347,7 @@
         />
         <div class="dialog-actions">
           <button type="button" id="cancel-save" class="secondary">Cancel</button
-          ><button class="primary" type="submit">Save look</button>
+          ><button id="save-submit" class="primary" type="submit">Save look</button>
         </div>
       </form>
     </dialog>

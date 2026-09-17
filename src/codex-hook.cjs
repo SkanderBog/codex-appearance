@@ -4,6 +4,7 @@ const electron = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { evaluate } = require('./evaluate.cjs');
+const { healthScript, layoutFailures } = require('./layout-health.cjs');
 const { ROOT, STATE, SETTINGS, readSettings, cssFor, saveSettings } = require('./core.cjs');
 fs.mkdirSync(STATE, { recursive: true, mode: 0o700 });
 const logFile = path.join(STATE, 'codex-bridge.json');
@@ -36,6 +37,8 @@ const installControls = `(() => {
     if (reveal && (!side || side.getBoundingClientRect().width === 0)) document.querySelector('button[class*="group/sidebar-trigger"]')?.click();
   };
   const mark = () => {
+    const route = document.querySelector('[data-testid="home-icon"]') ? 'home' : 'task';
+    if (document.documentElement.dataset.companionRoute !== route) document.documentElement.dataset.companionRoute = route;
     document.querySelectorAll('.app-shell-left-panel').forEach(e => e.setAttribute('data-companion-panel', 'sidebar'));
     // The native menu bar reserves space for window controls. Participate in its
     // flex layout so the button cannot float over controls or conversation text.
@@ -71,11 +74,13 @@ async function applyCurrent(win) {
   const s = readSettings();
   try {
     if (!win.webContents.getURL().startsWith('app://')) return;
+    const baseline = s.enabled ? await evaluate(win.webContents, healthScript) : null;
     const after = s.enabled
       ? `return ${installControls};`
       : `
       document.getElementById('companion-access')?.remove();
       document.documentElement.removeAttribute('data-companion-reveal');
+      document.documentElement.removeAttribute('data-companion-route');
       window.__companionObserver?.disconnect(); delete window.__companionObserver;
       delete window.__companionTogglePanels;
       document.querySelectorAll('[data-companion-panel]').forEach(e => e.removeAttribute('data-companion-panel'));
@@ -90,6 +95,18 @@ async function applyCurrent(win) {
     })()`,
     );
     if (s.enabled) {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      if (win.isDestroyed() || win.webContents.isDestroyed()) return;
+      const health = await evaluate(win.webContents, healthScript);
+      const failures = layoutFailures(baseline, health);
+      state.health = failures.length ? 'restored-after-layout-failure' : 'checked';
+      if (failures.length) {
+        state.healthFailures = failures;
+        saveSettings({ ...readSettings(), enabled: false });
+        await applyCurrent(win);
+        return;
+      }
+      delete state.healthFailures;
       state.render = result;
       state.originalSetBackground('#00000000');
     } else {
@@ -99,6 +116,17 @@ async function applyCurrent(win) {
     log();
   } catch (e) {
     state.error = e.message;
+    if (s.enabled) {
+      // A partial apply must not strand an unusable style or transparent surface.
+      try {
+        await evaluate(
+          win.webContents,
+          `document.getElementById('companion-appearance-style')?.remove()`,
+        );
+        state.originalSetBackground(state.originalBackground);
+      } catch {}
+      state.applied = false;
+    }
     log();
   }
 }
@@ -139,6 +167,8 @@ class StyledWindow extends OriginalWindow {
             const { integrationCheck } = require('./integration-check.cjs');
             state.integration = await integrationCheck(this, () => update(this));
             log();
+            if (process.env.COMPANION_CHECK_EXIT === '1')
+              electron.app.exit(state.integration.passed ? 0 : 1);
           } catch (e) {
             state.captureError = e.message;
             log();

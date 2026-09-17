@@ -157,6 +157,28 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
       translucent > 10000 && solidText > 50,
       { translucent, opaque, solidText },
     );
+    const beforeMatch = readSettings();
+    await click('#match-photo');
+    const matched = readSettings();
+    check(
+      'Photo matching changes colors without changing crop or typography',
+      matched.customColors &&
+        matched.background !== beforeMatch.background &&
+        matched.photo === beforeMatch.photo &&
+        matched.photoX === beforeMatch.photoX &&
+        matched.font === beforeMatch.font,
+    );
+    await click('#undo');
+    check(
+      'Photo palette is one undoable change',
+      JSON.stringify(readSettings()) === JSON.stringify(beforeMatch),
+    );
+    await click('#redo');
+    check(
+      'Redo restores the photo palette',
+      JSON.stringify(readSettings()) === JSON.stringify(matched),
+    );
+    await click('#undo');
     // Portable export/import exercises the same codecs used by the native file dialogs.
     const webp = library.importPhoto(
       fs.readFileSync(path.join(ROOT, 'test/fixtures/background.webp')),
@@ -214,6 +236,58 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
         "document.querySelector('.look-name').textContent.includes('Test <look>')&&!document.querySelector('.look-name look')",
       ),
     );
+    await input('look-search', 'no such saved look');
+    check(
+      'Search shows an empty result without deleting looks',
+      (await run("document.querySelectorAll('.look-card').length === 0")) &&
+        library.readLooks().some((look) => look.id === saved.id),
+    );
+    await input('look-search', 'TEST <look>');
+    check(
+      'Search matches names without case sensitivity',
+      await run("document.querySelectorAll('.look-card').length === 1"),
+    );
+    await input('look-search', '');
+    const countBeforeUpdate = library.readLooks().length;
+    await click('[data-page="background"]');
+    await input('photoTint', 55);
+    await click('[data-page="looks"]');
+    await click(`[data-update-look="${saved.id}"]`);
+    await click('#cancel-save');
+    check(
+      'Cancelling an update preserves the saved look',
+      library.readLooks().find((look) => look.id === saved.id).settings.photoTint === 0.42,
+    );
+    await click(`[data-update-look="${saved.id}"]`);
+    await input('look-name', 'Updated <look>');
+    await run("document.getElementById('save-form').requestSubmit()");
+    await sleep(400);
+    const updated = library.readLooks().find((look) => look.id === saved.id);
+    check(
+      'Updating replaces the same look with current settings and name',
+      library.readLooks().length === countBeforeUpdate &&
+        updated.name === 'Updated <look>' &&
+        updated.settings.photoTint === 0.55 &&
+        updated.created === saved.created,
+    );
+    control.setSize(900, 620);
+    await sleep(300);
+    check(
+      'Saved-look actions fit the minimum window width',
+      await run(`(() => {
+      const card = document.querySelector('.look-card');
+      const bounds = card.getBoundingClientRect();
+      return card.scrollWidth <= card.clientWidth && [...card.querySelectorAll('button')].every(button => {
+        const rect = button.getBoundingClientRect();
+        return rect.left >= bounds.left && rect.right <= bounds.right;
+      });
+    })()`),
+    );
+    fs.writeFileSync(
+      path.join(OUTPUT, 'saved-looks.png'),
+      (await control.webContents.capturePage()).toPNG(),
+    );
+    control.setSize(1180, 780);
     await click('[data-page="layout"]');
     await input('contentWidth', 'comfortable', 'change');
     await click('#reducedMotion');
@@ -235,6 +309,7 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
     );
     await click('[data-page="palettes"]');
     await input('foreground', '#eeddcc');
+    check('A new edit clears redo history', await run("document.getElementById('redo').disabled"));
     check(
       'Custom color picker enables custom palette',
       readSettings().customColors && readSettings().foreground === '#EEDDCC',
@@ -249,6 +324,77 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
     check(
       'Undo can recover reset configuration',
       readSettings().customColors && readSettings().foreground === '#EEDDCC',
+    );
+    await click('[data-page="looks"]');
+    check(
+      'Three included looks are available',
+      await run("document.querySelectorAll('[data-built-in]').length === 3"),
+    );
+    for (const look of library.builtInLooks()) {
+      await click(`[data-built-in="${look.id}"]`);
+      check(
+        'Included look applies: ' + look.name,
+        readSettings().photoName === look.name &&
+          !!assetDataURL(readSettings().photo) &&
+          readSettings().customColors,
+      );
+    }
+    fs.writeFileSync(
+      path.join(OUTPUT, 'included-looks.png'),
+      (await control.webContents.capturePage()).toPNG(),
+    );
+    await click('[data-page="background"]');
+    await input('homePhotoStrength', 100);
+    await input('taskPhotoStrength', 0);
+    await click('button[data-preview-route="home"]');
+    const homeCover = await run(
+      "Number(getComputedStyle(document.getElementById('sampleWindow')).getPropertyValue('--companion-photo-cover'))",
+    );
+    await click('button[data-preview-route="task"]');
+    const taskCover = await run(
+      "Number(getComputedStyle(document.getElementById('sampleWindow')).getPropertyValue('--companion-photo-cover'))",
+    );
+    check(
+      'Home and conversation artwork strengths preview independently',
+      Math.abs(homeCover - readSettings().photoTint) < 0.001 && taskCover === 1,
+    );
+    const floatingTaskCover = await evaluate(
+      preview.webContents,
+      "Number(getComputedStyle(document.querySelector('.terminal')).getPropertyValue('--companion-photo-cover'))",
+    );
+    await evaluate(preview.webContents, "document.getElementById('screen').click()");
+    const floatingHomeCover = await evaluate(
+      preview.webContents,
+      "Number(getComputedStyle(document.querySelector('.terminal')).getPropertyValue('--companion-photo-cover'))",
+    );
+    check(
+      'Floating preview switches between home and conversation artwork',
+      floatingTaskCover === 1 && Math.abs(floatingHomeCover - homeCover) < 0.001,
+    );
+    await evaluate(preview.webContents, "document.getElementById('screen').click()");
+    await click('[data-page="layout"]');
+    for (const [id, value] of Object.entries({
+      sidebarOpacity: 70,
+      headerOpacity: 60,
+      composerOpacity: 90,
+      readingOpacity: 55,
+    }))
+      await input(id, value);
+    const panels =
+      await run(`['#sample-sidebar','.sample-bar','.sample-input','.sample-answer'].map(selector => {
+      const style = getComputedStyle(document.querySelector(selector)); return { background:style.backgroundColor, opacity:style.opacity };
+    })`);
+    check(
+      'Independent surface opacity leaves foreground opacity intact',
+      panels.every(
+        (panel, index) =>
+          panel.opacity === '1' &&
+          panel.background.endsWith([', 0.7)', ', 0.6)', ', 0.9)', ', 0.55)'][index]),
+      ),
+    );
+    fs.writeFileSync(
+      path.join(OUTPUT, 'surface-controls.png'),
+      (await control.webContents.capturePage()).toPNG(),
     );
     const layout = await run(
       `({width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth,buttons:[...document.querySelectorAll('.preview-actions button')].map(e=>({w:e.clientWidth,content:e.scrollWidth}))})`,
