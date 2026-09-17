@@ -15,6 +15,9 @@ TESTING.md
 assets/icon.png
 assets/icon.svg
 compatibility.json
+docs/screenshots/background-controls.png
+docs/screenshots/floating-preview.png
+docs/screenshots/palettes.png
 launch.sh
 package-lock.json
 package.json

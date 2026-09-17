@@ -4,6 +4,22 @@ An unofficial appearance companion for compatible Codex desktop installations: l
 
 **Experimental Linux x86_64 release: `0.3.0-alpha.3`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
 
+## Screenshots
+
+Captured from the Linux companion and its floating preview. The sample text and generated landscape are demonstration content; these previews contain no private Codex conversations.
+
+**Choose a palette.** Sixteen palettes, custom colors, and an opacity control with a live preview.
+
+![Palette selector showing all sixteen palettes and the Graphite live preview](docs/screenshots/palettes.png)
+
+**Style the background.** The Photo mode accepts local images. This example uses the bundled landscape test image with the Amber palette, 60% background opacity, a 42% color overlay, and 4 px blur.
+
+![Background controls showing image placement, color overlay, blur, and the Amber preview](docs/screenshots/background-controls.png)
+
+**Keep the text sharp.** The floating preview shows the same image with translucent background layers and fully opaque text. Desktop compositing varies by environment; a static screenshot cannot show every transparency effect.
+
+![Floating appearance preview with a blurred landscape background and sharp Amber text](docs/screenshots/floating-preview.png)
+
 ## Try the alpha
 
 1. Download `codex-appearance-0.3.0-alpha.3-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
@@ -86,7 +102,7 @@ Existing development installations with `.state/appearance.json` keep using that
 
 An exported look includes its photo's **visible content** and the look name you choose. The original photo filename is replaced with a generic label. Review the photo before sharing; metadata removal cannot remove identifying details visible in the image.
 
-Runtime copies, account profiles, user photos, logs, screenshots, and local settings are excluded from the release manifest and Git. Ordinary diagnostics do not record Codex window titles. Explicit integration screenshots can still show private account content: do not publish the diagnostics directory. See [PRIVACY.md](PRIVACY.md).
+Runtime copies, account profiles, user photos, logs, diagnostic screenshots, and local settings are excluded from the release manifest and Git. The reviewed demonstration images in `docs/screenshots/` are included. Ordinary diagnostics do not record Codex window titles. Explicit integration screenshots can still show private account content: do not publish the diagnostics directory. See [PRIVACY.md](PRIVACY.md).
 
 ## Recovery and removal
 
