@@ -135,6 +135,18 @@ async function build() {
   // Packager's extraResource copier resolves symlinks into build-machine paths.
   // Preserve only links that remain inside the copied helper after relocation.
   copyPortableHelper(helper, path.join(resources, 'photo-helper'));
+  // Mac releases contain only the .app; Electron's ZIP places these notices
+  // beside that bundle. Copy them inside so they travel with the application.
+  const licenses = path.join(resources, 'licenses/electron');
+  fs.mkdirSync(licenses, { recursive: true });
+  for (const name of ['LICENSE', 'LICENSES.chromium.html']) {
+    const original = path.join(
+      path.dirname(desktopRequire.resolve('electron/package.json')),
+      'dist',
+      name,
+    );
+    fs.copyFileSync(original, path.join(licenses, name));
+  }
   const executable =
     process.platform === 'darwin'
       ? path.join(folder, 'Codex Appearance.app/Contents/MacOS/Codex Appearance')
