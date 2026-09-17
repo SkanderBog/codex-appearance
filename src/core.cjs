@@ -198,11 +198,18 @@ body { font-family:var(--font-sans) !important; }
 body::before { position:fixed; }
 #root { background:transparent !important; }
 [class*="_MarkdownRoot_"] { --markdown-line-height:${Number((s.fontSize * s.lineHeight).toFixed(2))}px !important; }
-[style*="--thread-content-max-width"], [class*="--thread-content-max-width"] { --thread-content-max-width:${{ comfortable: '48rem', wide: '76rem', full: '100%' }[s.contentWidth]} !important; }
+/* The supported Codex build reserves 300px plus a 16px gutter for its pinned
+   summary. Recompute at each width-bearing element to use its inherited live
+   animation shift, including the separately translated composer. Popovers do
+   not match this floating-panel selector and keep the requested width. */
+div:has(> [class*="top-(--thread-floating-content-top-inset)"] [data-pip-obstacle="thread-summary-panel"]) { --companion-summary-space:316px; }
+[style*="--thread-content-max-width"], [class*="--thread-content-max-width"] {
+ --thread-content-max-width:min(${{ comfortable: '48rem', wide: '76rem', full: '100%' }[s.contentWidth]}, max(0px, calc(100% - 2 * max(var(--thread-wide-block-inline-shift, 0px), calc(var(--companion-summary-space, 0px) - var(--thread-wide-block-inline-shift, 0px)))))) !important;
+}
 [role="menu"], [role="dialog"], [data-radix-popper-content-wrapper] { background-color:var(--companion-solid) !important; }
 ${s.terminalMode ? 'html:not([data-companion-reveal]) [data-companion-panel] { display: none !important; }' : ''}
 ${s.reducedMotion ? '*, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }' : ''}
-#companion-access { position:fixed; right:12px; top:7px; z-index:2147483000; display:flex; gap:6px; -webkit-app-region:no-drag; }
+#companion-access { position:static; display:flex; flex-shrink:0; align-items:center; margin-inline:6px; -webkit-app-region:no-drag; }
 #companion-access button { border:1px solid #ffffff2b; color:${p.foreground}; background:${p.background}; border-radius:6px; padding:5px 9px; font:11px 'DejaVu Sans Mono',monospace; cursor:pointer; }
 `;
   return css;

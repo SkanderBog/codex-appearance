@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.3
+
+- Move Panels into the application menu bar so it stays clear of native window controls and text.
+- Keep the conversation and composer inside the visible area when the summary is pinned, while resizing and during panel transitions.
+- Add pointer hit testing for Panels and layout regression checks for every conversation-width setting.
+
 ## 0.3.0-alpha.2
 
 - Make runtime preparation an explicit `prepare-runtime` command instead of an npm installation hook. A developer can install dependencies and run source tests without an installed Codex runtime.

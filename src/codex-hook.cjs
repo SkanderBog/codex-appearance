@@ -30,22 +30,29 @@ function log(extra = {}) {
   );
 }
 const installControls = `(() => {
-  const mark = () => {
-    document.querySelectorAll('.app-shell-left-panel').forEach(e => e.setAttribute('data-companion-panel', 'sidebar'));
-  };
-  mark();
-  if (!window.__companionObserver) { window.__companionObserver = new MutationObserver(mark); window.__companionObserver.observe(document.body, {childList:true, subtree:true}); }
   window.__companionTogglePanels = () => {
     const reveal = document.documentElement.toggleAttribute('data-companion-reveal');
     const side = document.querySelector('.app-shell-left-panel');
     if (reveal && (!side || side.getBoundingClientRect().width === 0)) document.querySelector('button[class*="group/sidebar-trigger"]')?.click();
   };
-  if (!document.getElementById('companion-access')) {
-    const bar = document.createElement('div'); bar.id = 'companion-access';
-    const panels = document.createElement('button'); panels.textContent = 'Panels'; panels.title = 'Reveal sidebar (Ctrl+B or Ctrl+Alt+F)';
-    panels.onclick = () => window.__companionTogglePanels();
-    bar.append(panels); document.body.append(bar);
-  }
+  const mark = () => {
+    document.querySelectorAll('.app-shell-left-panel').forEach(e => e.setAttribute('data-companion-panel', 'sidebar'));
+    // The native menu bar reserves space for window controls. Participate in its
+    // flex layout so the button cannot float over controls or conversation text.
+    const header = document.querySelector('[class*="_ApplicationMenuTopBar_"]');
+    if (!header) return;
+    let bar = document.getElementById('companion-access');
+    if (!bar) {
+      bar = document.createElement('div'); bar.id = 'companion-access';
+      const panels = document.createElement('button'); panels.type = 'button';
+      panels.textContent = 'Panels'; panels.title = 'Toggle sidebar (Ctrl+B or Ctrl+Alt+F)';
+      panels.onclick = () => window.__companionTogglePanels();
+      bar.append(panels);
+    }
+    if (bar.parentElement !== header) header.append(bar);
+  };
+  mark();
+  if (!window.__companionObserver) { window.__companionObserver = new MutationObserver(mark); window.__companionObserver.observe(document.body, {childList:true, subtree:true}); }
   return { root: document.documentElement.getAttribute('data-codex-window-type'),
     bodyBackground: getComputedStyle(document.body).backgroundColor,
     textColor: getComputedStyle(document.body).color,

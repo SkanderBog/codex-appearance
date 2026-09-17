@@ -80,10 +80,48 @@ async function integrationCheck(win, update) {
       state,
     );
     check('The whole UI is not faded', state.opacity === '1', state.opacity);
-    await evaluate(
+    const control = await evaluate(
       win.webContents,
-      `document.getElementById('companion-access').querySelector('button').click()`,
+      `(() => {
+      const button = document.querySelector('#companion-access button');
+      const header = button?.closest('[class*="_ApplicationMenuTopBar_"]');
+      if (!header) return { reachable: false };
+      const r = button.getBoundingClientRect(), h = header.getBoundingClientRect();
+      const safeRight = h.right - parseFloat(getComputedStyle(header).paddingRight);
+      const reachable = [[0.2,0.2],[0.5,0.5],[0.8,0.8]].every(([x,y]) =>
+        button.contains(document.elementFromPoint(r.left+r.width*x, r.top+r.height*y)));
+      const siblings = [...header.children].filter(e => !e.contains(button));
+      const overlaps = siblings.some(e => { const b=e.getBoundingClientRect();
+        return b.width>0 && b.height>0 && r.left<b.right && r.right>b.left && r.top<b.bottom && r.bottom>b.top; });
+      return { reachable, overlaps, safe: r.right <= safeRight && r.top >= h.top && r.bottom <= h.bottom,
+        x:Math.round(r.left+r.width/2), y:Math.round(r.top+r.height/2) };
+    })()`,
     );
+    check(
+      'Panels occupies a reachable menu-bar slot outside window controls',
+      control.reachable && control.safe && !control.overlaps,
+      control,
+    );
+    // A real pointer event catches overlays that programmatic click() misses.
+    win.focus();
+    win.webContents.focus();
+    await sleep(150);
+    win.webContents.sendInputEvent({ type: 'mouseMove', x: control.x, y: control.y });
+    win.webContents.sendInputEvent({
+      type: 'mouseDown',
+      x: control.x,
+      y: control.y,
+      button: 'left',
+      clickCount: 1,
+    });
+    await sleep(50);
+    win.webContents.sendInputEvent({
+      type: 'mouseUp',
+      x: control.x,
+      y: control.y,
+      button: 'left',
+      clickCount: 1,
+    });
     await sleep(300);
     state = await getState();
     check(
@@ -153,7 +191,7 @@ async function integrationCheck(win, update) {
       state.font.includes('Liberation Mono') &&
         state.width === '100%' &&
         state.widths.length > 0 &&
-        state.widths.every((w) => w === '100%') &&
+        state.widths.every((w) => w.startsWith('min(100%,')) &&
         state.spacing === '28px' &&
         state.codeSize === '15px' &&
         state.composerHeight > 15,
@@ -205,6 +243,61 @@ async function integrationCheck(win, update) {
       gradient.includes('70deg') && gradient.includes('68, 102, 136'),
       gradient,
     );
+    // Exercise the supported renderer's width classes in isolated layout fixtures.
+    // No task contents or account identifiers are included in the report.
+    for (const contentWidth of ['comfortable', 'wide', 'full']) {
+      saveSettings({ ...readSettings(), contentWidth });
+      await update();
+      const layout = await evaluate(
+        win.webContents,
+        `(() => {
+        const failures=[]; let cases=0;
+        const fixture=document.createElement('div');
+        fixture.style.cssText='position:fixed;left:0;top:0;opacity:0;pointer-events:none;height:100px';
+        document.body.append(fixture);
+        try {
+          for (const width of [720,1096,1164,1440,1800]) {
+            for (const pinned of [false,true]) {
+              const reserved=pinned && width>=1096 ? 316 : 0;
+              // Opening/closing animation frames as well as settled layouts.
+              const shifts=width>=1096 && width<1536 ? [0,79,158] : [0];
+              for (const shift of shifts) {
+                fixture.replaceChildren(); fixture.style.width=width+'px';
+                if (reserved) {
+                  const floating=document.createElement('div');
+                  floating.className='top-(--thread-floating-content-top-inset)';
+                  const obstacle=document.createElement('div');
+                  obstacle.dataset.pipObstacle='thread-summary-panel';
+                  floating.append(obstacle);fixture.append(floating);
+                }
+                for (const gutter of [0,30]) {
+                  const moving=document.createElement('div');
+                  moving.style.cssText='width:'+(width-gutter)+'px;margin-inline:auto;transform:translateX(-'+shift+'px);--thread-wide-block-inline-shift:'+shift+'px';
+                  const content=document.createElement('div');
+                  content.className='max-w-(--thread-content-max-width)';
+                  content.style.cssText='width:100%;margin-inline:auto;height:20px';
+                  moving.append(content);fixture.append(moving);
+                  const r=content.getBoundingClientRect();
+                  const expected=Math.min(${JSON.stringify({ comfortable: 768, wide: 1216, full: null }[contentWidth])} ?? width,
+                    width-gutter-2*Math.max(shift,reserved-shift));
+                  cases++;
+                  if(r.left < -0.5 || r.right > width-reserved+0.5 || Math.abs(r.width-expected)>0.5)
+                    failures.push({width,pinned,shift,gutter,left:r.left,right:r.right,actual:r.width,expected});
+                  moving.remove();
+                }
+              }
+            }
+          }
+        } finally { fixture.remove(); }
+        return { cases, failures };
+      })()`,
+      );
+      check(
+        'Conversation and composer fit beside the summary: ' + contentWidth,
+        layout.cases > 0 && layout.failures.length === 0,
+        layout,
+      );
+    }
     saveSettings({ ...original, enabled: false });
     await sleep(700);
     state = await getState();

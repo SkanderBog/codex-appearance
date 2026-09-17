@@ -2,17 +2,17 @@
 
 An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental Linux x86_64 release: `0.3.0-alpha.2`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
+**Experimental Linux x86_64 release: `0.3.0-alpha.3`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
 
 ## Try the alpha
 
-1. Download `codex-appearance-0.3.0-alpha.2-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.3.0-alpha.3-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.3.0-alpha.2-linux-x64.tar.gz
-   cd codex-appearance-0.3.0-alpha.2-linux-x64
+   tar -xzf codex-appearance-0.3.0-alpha.3-linux-x64.tar.gz
+   cd codex-appearance-0.3.0-alpha.3-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -64,7 +64,7 @@ The companion's own renderer has sandboxing, context isolation, no Node integrat
 
 **Ctrl+O** chooses a photo. **Ctrl+S** saves a look. **Undo change** recovers recent changes in the current session. Reset restores defaults while keeping saved looks. **Restore Codex style** disables the appearance layer while preserving your preferences.
 
-In styled Codex, **Panels**, **Ctrl+B**, or **Ctrl+Alt+F** reveals the sidebar. **Ctrl+Alt+R** disables the layer. The ordinary menus and command menu remain available. Close styled Codex and launch ordinary Codex to restore the original native window frame.
+In styled Codex, **Panels** sits beside the application menus. **Panels**, **Ctrl+B**, or **Ctrl+Alt+F** reveals the sidebar. **Ctrl+Alt+R** disables the layer. The ordinary menus and command menu remain available. Conversation width automatically fits the space beside a pinned summary, including while the panel animates. Close styled Codex and launch ordinary Codex to restore the original native window frame.
 
 **Copy palette for Codex** creates a native dark-theme import string for **Settings → Appearance → Dark theme → Import** on the tested build. Photos, transparency, and sidebar styling require the companion launcher.
 

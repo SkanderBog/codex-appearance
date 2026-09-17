@@ -13,8 +13,9 @@ GUI self-tests exercise actual controls, drag-and-drop image import, resizing, a
 - The source-only archive was extracted into a fresh directory containing spaces and launched from a different working directory, with separate temporary state and runtime paths.
 - All 28 graphical companion assertions passed, including image export/import and opaque foreground pixels on translucent backgrounds.
 - Both native file-dialog checks (open and save) passed using generated fixtures.
-- All 15 real-Codex integration assertions passed; no prompts were sent. The original installed application archive's SHA-256 hash was unchanged.
+- All 19 real-Codex integration assertions passed; no prompts were sent. The original installed application archive's SHA-256 hash was unchanged.
 - The reviewed source passed the manifest/privacy audit and Gitleaks 8.30.1 credential scan. Both production and development npm dependency audits reported zero known vulnerabilities.
+- Alpha.3 verifies Panels with pointer hit tests and a real mouse click. All 132 layout fixtures passed across widths, summary visibility, animation positions, and scrollbar gutters. A separate live conversation passed 24 checks across the three width settings, sidebar open/closed, and 900/1280/1440/1800-pixel windows.
 - Alpha.2 additionally verifies an offline `npm ci` with no compatible Codex installation configured; no runtime is prepared. The GUI-tested application code is unchanged from alpha.1.
 - Release archives use deterministic ordering, timestamps, and owner metadata; regression tests check reproducibility and private-data exclusion.
 
