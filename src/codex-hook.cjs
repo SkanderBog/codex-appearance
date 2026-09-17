@@ -1,5 +1,5 @@
 'use strict';
-// Loaded only by the private ASAR. The installed app and user preferences are untouched.
+// Loaded by the private Linux ASAR or owned native startup. Installed files stay untouched.
 const electron = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -81,8 +81,12 @@ async function applyCurrent(win) {
       delete state.healthFailures;
       state.render = result;
       state.originalSetBackground('#00000000');
+      state.originalSetVibrancy?.(null);
+      state.originalSetMaterial?.('none');
     } else {
       state.originalSetBackground(state.originalBackground);
+      state.originalSetVibrancy?.(state.originalVibrancy);
+      state.originalSetMaterial?.(state.originalMaterial);
     }
     appliedCSS.set(win, css);
     state.applied = s.enabled;
@@ -98,6 +102,8 @@ async function applyCurrent(win) {
           `${removeControls} document.getElementById('companion-appearance-style')?.remove()`,
         );
         state.originalSetBackground(state.originalBackground);
+        state.originalSetVibrancy?.(state.originalVibrancy);
+        state.originalSetMaterial?.(state.originalMaterial);
       } catch {}
       state.applied = false;
     }
@@ -111,10 +117,14 @@ class StyledWindow extends OriginalWindow {
       ? {
           ...options,
           transparent: true,
-          backgroundColor: '#00000000',
-          frame: false,
-          titleBarStyle: 'hidden',
-          hasShadow: false,
+          backgroundColor: readSettings().enabled ? '#00000000' : options.backgroundColor,
+          ...(readSettings().enabled && process.platform === 'darwin' ? { vibrancy: null } : {}),
+          ...(readSettings().enabled && process.platform === 'win32'
+            ? { backgroundMaterial: 'none' }
+            : {}),
+          ...(process.platform === 'linux'
+            ? { frame: false, titleBarStyle: 'hidden', hasShadow: false }
+            : {}),
         }
       : options;
     super(styled);
@@ -125,12 +135,27 @@ class StyledWindow extends OriginalWindow {
       css: null,
       originalSetBackground,
       originalBackground: options.backgroundColor || '#181818',
+      originalVibrancy: options.vibrancy ?? null,
+      originalMaterial: options.backgroundMaterial || 'auto',
+      originalSetVibrancy: process.platform === 'darwin' ? this.setVibrancy?.bind(this) : null,
+      originalSetMaterial:
+        process.platform === 'win32' ? this.setBackgroundMaterial?.bind(this) : null,
     };
     windows.set(this, state);
     this.setBackgroundColor = (color) => {
       state.originalBackground = color;
       originalSetBackground(readSettings().enabled ? '#00000000' : color);
     };
+    if (state.originalSetVibrancy)
+      this.setVibrancy = (value) => {
+        state.originalVibrancy = value;
+        state.originalSetVibrancy(readSettings().enabled ? null : value);
+      };
+    if (state.originalSetMaterial)
+      this.setBackgroundMaterial = (value) => {
+        state.originalMaterial = value;
+        state.originalSetMaterial(readSettings().enabled ? 'none' : value);
+      };
     this.webContents.on('did-finish-load', () => {
       appliedCSS.delete(this);
       update(this);
@@ -144,7 +169,9 @@ class StyledWindow extends OriginalWindow {
                 ? './signed-out-check.cjs'
                 : './integration-check.cjs',
             );
-            state.integration = await integrationCheck(this, () => update(this));
+            state.integration = await integrationCheck(this, () => update(this), {
+              originalBackground: () => state.originalBackground,
+            });
             log();
             if (process.env.COMPANION_CHECK_EXIT === '1')
               electron.app.exit(state.integration.passed ? 0 : 1);
@@ -155,7 +182,7 @@ class StyledWindow extends OriginalWindow {
         }, 7000);
     });
     this.webContents.on('before-input-event', (event, input) => {
-      if (input.type !== 'keyDown' || !input.control) return;
+      if (input.type !== 'keyDown' || !(input.control || input.meta)) return;
       if (
         readSettings().enabled &&
         readSettings().terminalMode &&
@@ -183,6 +210,30 @@ try {
     for (const win of windows.keys()) update(win);
   });
   electron.app.on('before-quit', stopWatching);
+  if (process.env.COMPANION_NATIVE_ACTIVE === '1') {
+    const focusFile = path.join(STATE, 'native-focus.json');
+    const stopFocus = watchSettings(focusFile, () => {
+      try {
+        const request = JSON.parse(fs.readFileSync(focusFile, 'utf8'));
+        if (!['focus', 'ping'].includes(request.action) || !/^[a-f0-9-]{36}$/.test(request.nonce))
+          return;
+        const win = [...windows.keys()].find((value) => !value.isDestroyed());
+        if (win) {
+          if (request.action === 'focus') {
+            if (win.isMinimized()) win.restore();
+            win.show();
+            win.focus();
+          }
+          fs.writeFileSync(
+            path.join(STATE, 'native-focus-ack.json'),
+            JSON.stringify({ action: request.action, nonce: request.nonce, pid: process.pid }),
+            { mode: 0o600 },
+          );
+        }
+      } catch {}
+    });
+    electron.app.on('before-quit', stopFocus);
+  }
   log({ installed: true });
 } catch (e) {
   log({ installed: false, error: e.message });

@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { spawnSync } = require('node:child_process');
+const { runPhotoHelper } = require('./photo-helper.cjs');
 const { ROOT, STATE, ASSETS, normalize, atomicJSON, assetDataURL } = require('./core.cjs');
 const bundledLooks = require('../assets/themes/catalog.json');
 const MAX_IMAGE = 20 * 1024 * 1024;
@@ -80,14 +80,10 @@ function updateLook(id, name, settings) {
 function photoPalette(id) {
   const photo = assetDataURL(id);
   if (!photo) throw new Error('Choose a photo before matching its colors.');
-  const result = spawnSync(
-    process.env.COMPANION_PYTHON || 'python3',
-    [path.join(ROOT, 'scripts/prepare-photo.py'), '--palette'],
-    {
-      input: Buffer.from(photo.slice('data:image/jpeg;base64,'.length), 'base64'),
-      maxBuffer: MAX_IMAGE,
-      timeout: 15000,
-    },
+  const result = runPhotoHelper(
+    ['--palette'],
+    Buffer.from(photo.slice('data:image/jpeg;base64,'.length), 'base64'),
+    MAX_IMAGE,
   );
   if (result.error || result.status !== 0)
     throw new Error('The photo colors could not be read. Try choosing the photo again.');
@@ -116,11 +112,7 @@ function imageFormat(bytes) {
 function importPhoto(bytes, name) {
   if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length > MAX_IMAGE || !imageFormat(bytes))
     throw new Error('Choose a PNG, JPEG, or WebP image under 20 MB.');
-  const result = spawnSync(
-    process.env.COMPANION_PYTHON || 'python3',
-    [path.join(ROOT, 'scripts/prepare-photo.py')],
-    { input: bytes, maxBuffer: MAX_IMAGE, timeout: 15000 },
-  );
+  const result = runPhotoHelper([], bytes, MAX_IMAGE);
   if (result.error) throw new Error('The photo could not be prepared: ' + result.error.message);
   if (result.status !== 0)
     throw new Error(result.stderr.toString().trim() || 'This image could not be opened.');

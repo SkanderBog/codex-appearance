@@ -6,6 +6,7 @@ for (const [name, channel] of Object.entries({
   save: 'save',
   preview: 'preview',
   launch: 'launch',
+  locateCodex: 'locate-codex',
   restore: 'restore',
   reset: 'reset',
   undo: 'undo',

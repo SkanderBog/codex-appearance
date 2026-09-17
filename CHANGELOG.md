@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0-alpha.1
+
+- Add self-contained Mac Apple Silicon application and Windows x64 executable prototypes; bundle Electron and the image decoder so users need no development tools.
+- Automatically discover and launch reviewed native Codex builds with the saved appearance, loading the hook in memory while preserving installed files and signatures.
+- Close and verify the temporary local startup debugger before reporting launch success.
+- Preserve native title-bar controls and restore native backgrounds, Mac vibrancy and Windows material with No look.
+- Add native package tests with external Python disabled, signed-out styling checks, signature verification, and unchanged-installation checks.
+
 ## 0.5.0-alpha.1
 
 - Add experimental standalone macOS and Windows editors using pinned official Electron, without a Codex installation or account.

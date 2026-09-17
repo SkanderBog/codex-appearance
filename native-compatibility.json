@@ -1,0 +1,31 @@
+{
+  "darwin-arm64": {
+    "version": "26.911.61220",
+    "main": ".vite/build/main-DS3FMq4P.js",
+    "mainSha256": "9f4ce005ae6422a85758fe1d8e8f26e049f85026dc65618f6901fa65b0be35c0",
+    "earlyBootstrapSha256": "d6a71c59c4ea3edd6ae9d11d74579fb811c59f16888938cb5288bef1570bbf6d",
+    "mainConstructorSymbol": "d",
+    "constructorCount": 5,
+    "fuseWire": "101100011",
+    "downloadUrl": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg",
+    "bundleIdentifier": "com.openai.codex",
+    "executable": "ChatGPT.app/Contents/MacOS/ChatGPT",
+    "fuseBinary": "ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/153.0.8010.36/Codex Framework",
+    "minimumOS": "13.0"
+  },
+  "win32-x64": {
+    "version": "26.908.70816",
+    "main": ".vite/build/main-D8abTQQE.js",
+    "mainSha256": "b55be874a9b5a262c09a7945df38cec9b0ce8f14bd584ef73d6feca301ed90b4",
+    "earlyBootstrapSha256": "b3529e5fe56cf67cbabff9f94661b7dcbc90f505fd57cbfb577b4d417811ed8b",
+    "mainConstructorSymbol": "l",
+    "constructorCount": 4,
+    "fuseWire": "101100011",
+    "downloadUrl": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT-x64.msix",
+    "msixIdentity": "OpenAI.Codex",
+    "msixVersion": "26.908.9136.0",
+    "executable": "app/ChatGPT.exe",
+    "fuseBinary": "app/chrome.dll",
+    "minimumOS": "10.0.19041.0"
+  }
+}

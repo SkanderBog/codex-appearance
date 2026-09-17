@@ -1,38 +1,45 @@
-# Native port and tester plan
+# Native prototype and tester plan
 
-Version 0.5.0-alpha.1 provides source-based standalone editors for macOS and Windows. They can edit, preview, save, import and export looks without Codex installed or signed in. They do not yet offer one-click installation or apply backgrounds and layout inside native Codex.
+Version 0.6.0-alpha.1 adds a self-contained Mac Apple Silicon application and Windows x64 executable. Opening the companion automatically opens a reviewed installed Codex with the saved appearance. The editor runtime and image decoder are bundled; testers do not need Node, Python or npm.
 
-## Work needed for one-click opening
+## Current compatibility
 
-1. Bundle the companion with its own Electron runtime and photo decoder. Either package the existing Python/Pillow helper or replace it with an equivalently bounded native image pipeline, retaining the image-size, metadata-removal and color-contrast tests. Users must not need to install Node, Python or Pillow.
-2. Produce a Mac application bundle and a Windows executable/installer from native CI runners. Test a clean machine without development tools and paths containing spaces. Build and verify each advertised architecture separately.
-3. Sign release binaries. Public Mac distribution additionally needs notarization; the maintainer needs an Apple Developer identity. Windows distribution needs a suitable signing identity/service. Store signing credentials in protected CI secrets, never in source or tester reports. Early unsigned testing can precede this, but it is not a warning-free one-click public release.
-4. Verify install, reopen, upgrade, removal and preservation of settings. Publish checksums and clearly label experimental builds.
+| Prototype   | Reviewed native Codex version |
+| ----------- | ----------------------------- |
+| macOS ARM64 | 26.911.61220                  |
+| Windows x64 | 26.908.70816                  |
 
-Electron documents the [packaging workflow](https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging) and [signing requirements](https://www.electronjs.org/docs/latest/tutorial/code-signing).
+The launcher verifies main-process and startup code fingerprints, not just the visible version number. Updated or unsupported builds are rejected before launch. No Intel Mac or Windows ARM64 integration is claimed.
 
-## Additional work needed for styled Codex
+The native launcher uses the reviewed app's enabled startup inspector on an ephemeral loopback port, loads the local appearance hook before application startup, resumes, and closes/verifies that inspector. It preserves the installed files, signatures and security fuses. It does not patch a signed application on disk or enable a disabled debugging capability. Native traffic lights/window controls remain in place; No look restores backgrounds and native vibrancy/material.
 
-1. Identify installed Codex locations, version, architecture and supported launch behavior on each OS. Review the actual native build's window creation and UI selectors; do not infer support from the Linux version number alone.
-2. Choose and implement a platform-specific integration that preserves the original installation and supports restoration. Prefer supported customization interfaces where available. Determine how each build's signing and archive-integrity protections affect the design before promising a copied-runtime strategy. Electron's [ASAR integrity documentation](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) explains why the existing Linux archive patch is not a drop-in native adapter.
-3. Validate platform window behavior: transparency, title bars, dragging, native menus, keyboard shortcuts, resize/maximize/full-screen, task navigation, sidebar and summary layout. Run before and after sign-in without collecting account data.
-4. Verify live edits, persistence across restart, No look, undo/redo, and recovery from failed styling. Unsupported builds must stop with an actionable explanation while ordinary Codex remains usable.
-5. Add only successfully reviewed and tested builds to compatibility metadata. Retest after Codex updates; an unrecognized build is not automatically compatible.
+The prototype is unsigned/unnotarized. A first-open OS warning or an organizational block is possible. Do not disable operating-system security or organization policy to test it. Public signing and notarization require maintainer signing identities; see [Electron's signing guidance](https://www.electronjs.org/docs/latest/tutorial/code-signing).
 
-Packaging alone does not complete this integration work. Until it is validated, the standalone editor keeps styled-Codex launch disabled.
+## Install and open
 
-## What testers can do now
+1. Use an existing compatible official Codex installation. Do not downgrade a working application just for this test.
+2. Download the matching prototype ZIP and checksum from the release, verify the checksum, and extract it.
+3. On Mac, place **Codex Appearance.app** in a permanent folder and open it. On Windows, keep the entire extracted folder together and open **Codex Appearance.exe**.
+4. Codex should open already styled, with the appearance editor available for changes. A new companion setup starts with Graphite. Existing saved settings remain in the same native companion data directory.
+5. If discovery fails, use **Locate Codex**. An unsupported build should produce a version explanation rather than a launch-success message.
 
-Use the README's native source-preview setup. This initial preview still requires dependency installation. Test opening the editor, local photo import, all three included looks, floating preview, saving/exporting/importing a look, undo/redo, No look, and reopening. Verify file-picker cancel and save behavior, readability, window resizing and native keyboard shortcuts. A small generated or non-private photo is sufficient.
+Use a generated or non-private image for testing. No login is needed for editor, image, or signed-out appearance checks. Authentication and chat/model access remain Codex's responsibility.
 
-For each result report:
+## Test sequence
 
-- Companion version and OS version.
-- CPU architecture: Mac Apple Silicon/Intel or Windows x64/ARM64.
-- Whether the editor started and the first failed step, if any.
-- Codex version and installation method, if testing a future integration build.
-- A brief expected/actual description; use demonstration content if a screenshot is needed.
+- Open by double-clicking the app/executable, without a terminal or development tools.
+- Confirm the saved palette and photo appear in Codex, including before sign-in.
+- Change colors, fonts, photo crop/blur and opacity. Confirm text remains readable.
+- Use a saved look, **No look**, undo and redo; close and reopen to check persistence.
+- Check Mac traffic lights or Windows minimize/maximize/close controls, resizing and full-screen behavior.
+- If signed in, test task navigation, composer access, sidebar reveal, summary panels and scrolling using non-private demonstration content. Do not send a prompt solely for testing unless you want to.
+- Close the appearance editor, reopen it, and double-click the prototype again. It should focus/reuse its styled Codex instance rather than create a conflicting second instance.
+- Quit ordinary and styled windows normally; confirm ordinary Codex still launches and retains its original appearance.
 
-Do not send credentials, authentication files, full account/profile directories or unreviewed logs. The automated standalone tests use generated fixtures. Future native integration tests should keep private screenshots local and return fixed check results.
+## Report results
 
-Start full integration testing with one Apple Silicon Mac and one Windows x64 machine. Add Intel Mac and Windows ARM64 only when their builds and architecture-specific behavior have been checked. Automated runners can compile and exercise the editor; real-machine testers are still needed for Codex integration and desktop compositing.
+Provide companion version, OS version, processor architecture, Codex version/installation method, the first failing step, and a short expected/actual description. For unsupported builds, the visible Codex version is enough to begin review. A version match is not a reason to bypass a fingerprint rejection.
+
+Do not send passwords, authentication files, account/profile directories or unreviewed logs. Use demonstration content for any screenshot. Automated CI uses fresh signed-out profiles and generated image fixtures; native Codex downloads and private profiles are excluded from prototype artifacts.
+
+Automated native runs are necessary but do not establish every physical-device rendering, graphics-driver, authenticated-layout or window-management behavior. Start physical testing with one Apple Silicon Mac and one Windows 11 x64 machine. Add more architectures only after their native builds have been inspected and tested.

@@ -11,3 +11,7 @@ Their original theme directories each declare MIT in `habitat.json` and include 
 Habitat documents the backgrounds as generated original scenery in its [asset provenance](https://github.com/wp-a/CodexHabitat/blob/71a38c09610432d91c582006867b82ffd8fd8529/docs/qa/theme-asset-provenance.md). The three selected images were visually reviewed for this release. Exporting a look with one of these backgrounds includes its attribution and MIT license text; importing and re-exporting retains that attribution.
 
 No Habitat Swift implementation, application bundle, pet artwork, or third-party runtime is included. The companion's application changes are independently implemented. The license attached to these theme assets does not establish a license for the rest of Habitat's repository.
+
+## Native binary prototype runtimes
+
+The native prototypes bundle the official Electron runtime and a frozen Python/Pillow image helper. Electron's LICENSE and LICENSES.chromium.html remain in the application package. The photo-helper resources include the Python PSF license, Pillow and image-codec license notices, and PyInstaller's license with its distribution exception. No Codex application files are redistributed. The source archive continues to contain only source and reviewed project assets.

@@ -305,6 +305,11 @@ drop.addEventListener('drop', async (e) => {
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', (e) => e.preventDefault());
 $('preview').onclick = () => action(() => api.preview());
+$('locate-codex').onclick = () =>
+  action(async () => {
+    const result = await api.locateCodex();
+    if (result) status(result.message);
+  });
 $('launch').onclick = () =>
   action(async () => {
     const result = await api.launch();
@@ -388,7 +393,16 @@ api
   .read()
   .then((result) => {
     data = result;
-    $('version').textContent = data.standalone ? 'STANDALONE EDITOR' : 'CODEX ' + data.version;
+    $('version').textContent = data.native
+      ? 'NATIVE PROTOTYPE'
+      : data.standalone
+        ? 'STANDALONE EDITOR'
+        : 'CODEX ' + data.version;
+    if (data.canLocateCodex) {
+      $('locate-codex').hidden = false;
+      $('runtime-note').textContent =
+        'Opens the reviewed Codex build with your saved appearance. Installed Codex files stay unchanged. No look restores its original appearance.';
+    }
     if (!data.canLaunchCodex) {
       $('launch').disabled = true;
       $('launch').textContent = 'Codex styling unavailable';

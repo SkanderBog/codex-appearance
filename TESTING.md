@@ -1,10 +1,18 @@
 # Alpha verification
 
-Styled Codex integration is limited to Linux x86_64 and the reviewed Codex 26.901.41123 fingerprint. Version 0.5.0 adds separate experimental standalone editor editions for macOS and Windows; they do not apply styles inside native Codex.
+Styled Codex support is limited to reviewed build fingerprints. Version 0.6.0 adds packaged Mac ARM64 and Windows x64 native-launch prototypes; 0.5.0 source editors remain a separate editor-only workflow.
 
 Automated coverage includes settings validation, injection/path rejection, all palettes, bounded image decoding and EXIF removal, source-archive preservation, invalid archive rejection, sandbox-helper selection, path portability, unknown-build rejection, installer ownership checks, manifest exclusion, credential detection, and deterministic release archives.
 
 GUI self-tests exercise actual controls, drag-and-drop image import, resizing, alpha rendering, saved-look import/export, undo, reset, and layout. An optional integration check exercises real Codex without sending prompts. Reports and screenshots stay local.
+
+## 0.6.0-alpha.1 native prototype verification (2026-09-17)
+
+- Native production packages were inspected without changing their files: Mac ARM64 26.911.61220 and Windows x64 26.908.70816. Both expose their normal main-process startup inspector; the Linux installation's disabled inspector is not bypassed.
+- The new adapter has a real Node startup-inspector lifecycle regression, restricted-endpoint checks, read-only archive rejection tests, native backdrop restoration tests, and private focus/reconnection checks.
+- The binary packaging allowlist excludes downloaded Codex distributions, accounts, settings, photos, profiles and diagnostics. Electron and the frozen photo helper retain their license notices.
+- Native CI must pass the packaged editor with external Python disabled, real signed-out Codex styling, closed-inspector verification, and unchanged native signatures/files before uploading a binary prototype. Results are recorded after the native runs complete.
+- Physical-device graphics/compositing, signed-in native task layouts, manually operated native file dialogs, Mac Intel and Windows ARM64 remain outside the verified coverage. The prototypes have no public signing/notarization identity.
 
 ## 0.5.0-alpha.1 desktop and sign-in checks (2026-09-17)
 
@@ -61,5 +69,5 @@ The graphical tests used Ubuntu GNOME/Wayland with XWayland and Codex 26.901.411
 
 - A second physical Linux machine and other desktop/compositor/graphics combinations.
 - Transparent-window resizing and maximization across those environments.
-- Native Wayland and ARM64 Linux integration; native Codex integration on macOS and Windows.
+- Native Wayland and ARM64 Linux integration; additional native Codex builds and physical Mac/Windows environments.
 - Future Codex builds (explicitly rejected until reviewed).

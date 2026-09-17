@@ -2,7 +2,7 @@
 
 An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, three included scenic looks, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental release: `0.5.0-alpha.1`.** Linux x86_64 supports styled Codex. macOS and Windows have standalone editor previews. The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
+**Experimental release: `0.6.0-alpha.1`.** Linux retains its existing integration. Mac Apple Silicon and Windows x64 now have packaged prototypes that open a reviewed native Codex installation with saved styling. Compatibility is build-specific; unsupported builds stop without changing installation files. Physical-device testing remains necessary. This project is not affiliated with or endorsed by OpenAI.
 
 ## Screenshots
 
@@ -22,21 +22,33 @@ Captured from the Linux companion and its floating preview. The sample text and 
 
 ## Platform support and sign-in
 
-| Edition                    | Edit, preview, save and export looks | Apply backgrounds and layout inside Codex |
-| -------------------------- | ------------------------------------ | ----------------------------------------- |
-| Linux x86_64 integration   | Yes                                  | Reviewed Codex 26.901.41123 only          |
-| macOS standalone preview   | Yes                                  | Not implemented                           |
-| Windows standalone preview | Yes                                  | Not implemented                           |
+| Edition                          | Edit and preview looks | Open styled Codex                                     |
+| -------------------------------- | ---------------------- | ----------------------------------------------------- |
+| Linux x86_64 source              | Yes                    | Reviewed 26.901.41123 only                            |
+| Mac ARM64 application prototype  | Yes                    | Reviewed 26.911.61220 only                            |
+| Windows x64 executable prototype | Yes                    | Reviewed 26.908.70816 only                            |
+| Native source editor             | Yes                    | Editor-only unless explicitly enabled for development |
 
-**No login is needed to edit settings.** Palettes, photos, saved looks, and previews are local. On the supported Linux build, styling also applies to the signed-out screen: launch the companion, choose a look, and open styled Codex. The sign-in controls remain available; **Looks → No look** restores the normal appearance. Chat and model access still require Codex authentication. Signing in is handled by Codex itself, not this companion. The Linux launcher needs a compatible Codex installation, but the standalone editor does not.
+**No login is needed to edit settings or style the signed-out screen.** Palettes, photos, saved looks, and previews are local. Chat and model access still require Codex authentication. Sign-in is handled by Codex itself, not this companion.
 
-The native editor shares the existing interface and portable look format. It uses platform fonts, storage directories, and Electron file dialogs, with Command shortcuts on Mac. **Open styled Codex** is disabled in the standalone edition. Copying a palette produces the tested Linux build's native import format; its acceptance by native Mac/Windows Codex versions is not yet verified. Photos, translucency, and layout controls in these editions affect previews only.
+Native prototypes briefly use the reviewed application's existing loopback startup debugger to load the appearance hook before its window is created. The debugger connection and listener are then closed and checked. The installed application, signatures and security fuses are unchanged. A separate window profile keeps companion-launched UI preferences separate; normal runs still use Codex's normal authentication services. No appearance settings are uploaded.
 
-macOS and Windows Codex injection is a separate, unfinished port. Their app bundles, signatures, archive integrity, and internal window layout need build-specific review and tests. These previews do not modify Codex or bypass signature checks.
+The companion retains native Mac traffic lights and Windows window controls. **Looks → No look** removes the appearance and restores native background/material settings. Existing saved looks and preferences remain available. The transparent-window capability is established when the window is created; restarting ordinary Codex restores its entirely original window construction.
 
-See the [native port and tester plan](docs/NATIVE-PORT.md) for the remaining one-click packaging work, integration requirements, and what testers should report.
+See the [native tester plan](docs/NATIVE-PORT.md) for compatibility, architecture coverage and reporting instructions.
 
-## Try the macOS or Windows editor preview
+## Open a native prototype
+
+1. Install a compatible official Codex desktop build. The prototype does not include or install Codex. Do not downgrade a working installation just for this experiment; report an unsupported version so it can be reviewed.
+2. Download the matching prototype ZIP and its `.sha256` file from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases). Compare with `shasum -a 256 <archive>` on Mac or `Get-FileHash <archive> -Algorithm SHA256` in PowerShell.
+3. Extract the ZIP. On **Mac Apple Silicon**, move **Codex Appearance.app** to Applications or another permanent folder and open it. On **Windows x64**, keep the entire extracted **Codex Appearance** folder together and open **Codex Appearance.exe**. Its DLLs and resources are required.
+4. The companion automatically finds the reviewed installed Codex and opens it with your saved appearance. First launch uses Graphite. Change the appearance in the companion window; the styled Codex window updates automatically. If automatic discovery fails, use **Locate Codex** to choose the app or executable.
+
+No Node, Python, Pillow, npm commands, or manual patching are required for these binary prototypes. They bundle their own editor runtime and image decoder. They are **unsigned/unnotarized prototypes**: the OS may ask for first-open confirmation or block them under organizational policy. Do not disable Gatekeeper, SmartScreen, or organization policy. Signed public installers remain future work.
+
+Mac Intel and Windows ARM64 native integration have not been reviewed. A version match alone is insufficient: the launcher also checks the reviewed application code fingerprints. An updated or unsupported build produces an explanation instead of attempting an unreviewed hook.
+
+## Run the native source editor instead
 
 These are source packages, not signed application installers. Install Node.js 22.12+ and Python 3.10+ first. Download the matching `macos-editor-preview.zip` or `windows-editor-preview.zip` plus `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases), compare the archive's SHA-256 with the matching checksum line, then extract it. Use `shasum -a 256 <archive>` on Mac or `Get-FileHash <archive> -Algorithm SHA256` in PowerShell.
 
@@ -51,19 +63,19 @@ This explicit installation downloads the pinned official Electron runtime and it
 - **macOS:** create a local Python environment with `python3 -m venv .venv`, install Pillow with `.venv/bin/python -m pip install Pillow==11.3.0`, and run `COMPANION_PYTHON="$PWD/.venv/bin/python" bash launch-macos.command`. This also works when Finder does not expose your Node/Python PATH. Alternatively set `COMPANION_PYTHON` to an existing Pillow-enabled Python.
 - **Windows (PowerShell):** run `py -3 -m venv .venv`, then `.\.venv\Scripts\python.exe -m pip install Pillow==11.3.0`. Set `$env:COMPANION_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path` and run `.\launch-windows.cmd`.
 
-The editor runs locally after setup; neither Codex nor a Codex account is required. Electron selects the runtime for the machine running `npm ci`; do not copy `desktop/node_modules` between operating systems or architectures. Native file picking and desktop compositing still need broader manual testing. macOS Intel and Windows ARM64 are not yet validated.
+The editor runs locally after setup; neither Codex nor a Codex account is required. Electron selects the runtime for the machine running `npm ci`; do not copy `desktop/node_modules` between operating systems or architectures. Native file picking and desktop compositing still need broader manual testing. Mac Intel and Windows ARM64 native integration are not yet validated.
 
 Native settings, photos, saved looks and editor profiles live in `~/Library/Application Support/codex-appearance` on Mac or `%LOCALAPPDATA%\codex-appearance` on Windows. Close the editor and remove the extracted source/runtime folder to uninstall; delete its data directory separately to remove saved settings. The Linux-only installer and runtime preparation scripts are not used by these editions.
 
 ## Try the Linux integration alpha
 
-1. Download `codex-appearance-0.5.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.6.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum --ignore-missing -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.5.0-alpha.1-linux-x64.tar.gz
-   cd codex-appearance-0.5.0-alpha.1-linux-x64
+   tar -xzf codex-appearance-0.6.0-alpha.1-linux-x64.tar.gz
+   cd codex-appearance-0.6.0-alpha.1-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -215,4 +227,4 @@ See [TESTING.md](TESTING.md) for results and remaining coverage, [CONTRIBUTING.m
 
 ## License
 
-The companion's source, original icons, and generated test fixtures are provided under the [MIT license](LICENSE). The three included Habitat looks retain their [upstream MIT license](assets/themes/LICENSE) and [attribution](THIRD_PARTY_NOTICES.md). No Codex application files or third-party runtime binaries are included. Their licenses and terms remain separate.
+The companion's source, original icons, and generated test fixtures are provided under the [MIT license](LICENSE). The three included Habitat looks retain their [upstream MIT license](assets/themes/LICENSE) and [attribution](THIRD_PARTY_NOTICES.md). No Codex application files are included. Native binary prototypes include Electron and a frozen Python/Pillow helper, with their license notices inside the app resources. Their licenses and terms remain separate.

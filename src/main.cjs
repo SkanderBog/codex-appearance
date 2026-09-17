@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, clipboard, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, nativeImage, Tray, Menu } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
@@ -20,14 +20,47 @@ const {
 } = require('./core.cjs');
 const library = require('./library.cjs');
 const dialog = require('./file-dialogs.cjs');
-const { standalone, runtimeInfo } = require('./runtime-info.cjs');
+const { standalone, nativeEnabled, runtimeInfo } = require('./runtime-info.cjs');
 const history = [];
 const future = [];
 let lastChange = 0;
 fs.mkdirSync(STATE, { recursive: true, mode: 0o700 });
 app.setName('Codex Appearance Companion');
 app.setPath('userData', path.join(STATE, 'companion-profile'));
-let control, preview, launched;
+let control, preview, launched, nativeLaunchPending, nativeTray, nativeAbort;
+let quitting = false;
+function showAppearance() {
+  if (control && !control.isDestroyed()) {
+    control.show();
+    control.focus();
+  }
+}
+function installNativeTray() {
+  if (nativeTray || !nativeEnabled) return;
+  const menu = Menu.buildFromTemplate([
+    { label: 'Show appearance settings', click: showAppearance },
+    {
+      label: 'Open styled Codex',
+      click: () =>
+        launchCodex().catch((error) => {
+          showAppearance();
+          control.webContents.send('appearance:changed', { error: error.message });
+        }),
+    },
+    { type: 'separator' },
+    { label: 'Quit appearance companion', click: () => app.quit() },
+  ]);
+  nativeTray = new Tray(
+    nativeImage
+      .createFromPath(path.join(ROOT, 'assets/icon.png'))
+      .resize({ width: 20, height: 20 }),
+  );
+  nativeTray.setToolTip('Codex Appearance');
+  nativeTray.setContextMenu(menu);
+  nativeTray.on('click', showAppearance);
+  if (process.platform === 'darwin')
+    Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: 'Codex Appearance', submenu: menu }]));
+}
 const selfTest = process.env.COMPANION_MODE === 'self-test';
 const preload = path.join(__dirname, 'preload.cjs');
 function makeWindow(options) {
@@ -260,7 +293,40 @@ handle('appearance:copy-theme', () => {
   clipboard.writeText(themeString(readSettings()));
   return true;
 });
-handle('appearance:launch', () => {
+async function launchCodex() {
+  if (nativeEnabled) {
+    if (launched && launched.exitCode === null) {
+      await require('./native-launch.cjs').focusNative();
+      return { ok: true, message: 'Styled Codex is already running.' };
+    }
+    if (nativeLaunchPending) return nativeLaunchPending;
+    nativeAbort = new AbortController();
+    nativeLaunchPending = (async () => {
+      launched = await require('./native-launch.cjs').launchNative({
+        smoke: process.argv.includes('--native-smoke'),
+        signal: nativeAbort.signal,
+      });
+      const current = launched;
+      current.once('exit', (code) => {
+        if (launched === current) launched = null;
+        if (process.argv.includes('--native-smoke')) app.exit(code ?? 1);
+        else if (
+          control &&
+          !control.isDestroyed() &&
+          !control.isVisible() &&
+          (!preview || preview.isDestroyed() || !preview.isVisible())
+        )
+          app.quit();
+      });
+      return { ok: true, message: 'Opened styled Codex in its separate window profile.' };
+    })();
+    try {
+      return await nativeLaunchPending;
+    } finally {
+      nativeLaunchPending = null;
+      nativeAbort = null;
+    }
+  }
   if (standalone)
     throw new Error(
       'Styled Codex is not available in the standalone editor. You can edit, preview, save, and export looks locally.',
@@ -287,6 +353,20 @@ handle('appearance:launch', () => {
     if (code) launchError('Styled Codex exited with an error. Check your local codex-test.log.');
   });
   return { ok: true, message: 'Opening a separate Codex test profile. No prompt is sent.' };
+}
+handle('appearance:launch', launchCodex);
+handle('appearance:locate-codex', async () => {
+  if (!nativeEnabled) throw new Error('Native Codex integration is not enabled.');
+  const result = await dialog.showOpenDialog(control, {
+    title: 'Locate Codex',
+    properties: process.platform === 'darwin' ? ['openFile', 'openDirectory'] : ['openFile'],
+    ...(process.platform === 'win32'
+      ? { filters: [{ name: 'Codex application', extensions: ['exe'] }] }
+      : {}),
+  });
+  if (result.canceled || !result.filePaths.length) return null;
+  require('./native-install.cjs').rememberInstall(result.filePaths[0]);
+  return launchCodex();
 });
 ipcMain.on('appearance:window', (event, action) => {
   if (!allowed(event)) return;
@@ -297,12 +377,24 @@ ipcMain.on('appearance:window', (event, action) => {
 ipcMain.on('appearance:close', (event) => {
   if (allowed(event)) BrowserWindow.fromWebContents(event.sender)?.close();
 });
-app.on('before-quit', () => dialog.cancelAll());
+app.on('before-quit', () => {
+  quitting = true;
+  nativeAbort?.abort();
+  dialog.cancelAll();
+});
+app.on('activate', showAppearance);
 app.on('window-all-closed', () => app.quit());
 if (!app.requestSingleInstanceLock()) {
   app.exit(selfTest ? 1 : 0);
 } else {
   app.on('second-instance', () => {
+    if (nativeEnabled && launched && launched.exitCode === null) {
+      showAppearance();
+      require('./native-launch.cjs')
+        .focusNative()
+        .catch(() => {});
+      return;
+    }
     if (control && !control.isDestroyed()) {
       control.show();
       control.focus();
@@ -318,8 +410,70 @@ if (!app.requestSingleInstanceLock()) {
       minHeight: 620,
       frame: false,
     });
+    if (nativeEnabled)
+      require('./native-session.cjs').bindEditorLifecycle(
+        control,
+        () => !!nativeLaunchPending || launched?.exitCode === null,
+        () => quitting,
+      );
+    installNativeTray();
     control.setMenuBarVisibility(false);
     await control.loadFile(path.join(__dirname, 'index.html'));
+    if (nativeEnabled && !selfTest) {
+      try {
+        if (process.argv.includes('--native-smoke')) {
+          const photo = library.importPhoto(
+            fs.readFileSync(path.join(ROOT, 'test/fixtures/background.png')),
+            'Smoke background.png',
+            nativeImage,
+          );
+          saveSettings({
+            ...DEFAULTS,
+            ...photo,
+            preset: 'amber',
+            opacity: 0.6,
+            backgroundMode: 'photo',
+            photoTint: 0.2,
+            photoBlur: 0,
+            photoFit: 'cover',
+            photoX: 28,
+            photoY: 50,
+            homePhotoStrength: 1,
+            taskPhotoStrength: 1,
+            enabled: true,
+          });
+        }
+        await launchCodex();
+        if (process.argv.includes('--native-smoke')) {
+          control.close();
+          const editorCloseHides = !control.isDestroyed() && !control.isVisible();
+          showAppearance();
+          const editorReopens = !control.isDestroyed() && control.isVisible();
+          const reportPath = path.join(require('./paths.cjs').OUTPUT, 'native-smoke-report.json');
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          fs.writeFileSync(
+            reportPath,
+            JSON.stringify({
+              ...report,
+              passed: report.passed && editorCloseHides && editorReopens,
+              editorCloseHides,
+              editorReopens,
+            }),
+            { mode: 0o600 },
+          );
+          if (!editorCloseHides || !editorReopens)
+            throw new Error('Native companion lifecycle check failed.');
+        }
+      } catch (error) {
+        showAppearance();
+        control.webContents.send('appearance:changed', { error: error.message });
+        if (process.argv.includes('--native-smoke')) {
+          console.error(error.message);
+          launched?.kill?.();
+          app.exit(1);
+        }
+      }
+    }
     if (selfTest) {
       try {
         await require('./self-test.cjs').runSelfTest({
