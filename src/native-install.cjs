@@ -1,6 +1,9 @@
 'use strict';
 // Read-only inspection. No installation files, signatures, or fuses are changed.
 const fs = require('node:fs');
+// Electron virtualizes .asar paths. Fingerprinting needs the archive's actual
+// bytes, so use its documented raw filesystem adapter inside the desktop app.
+const archiveFS = process.versions.electron ? require('original-fs') : fs;
 const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
@@ -10,10 +13,11 @@ const supported = require('../native-compatibility.json');
 function readEntry(archive, name) {
   if (name.split('/').some((part) => !part || part === '.' || part === '..'))
     throw new Error('Invalid archive path.');
-  const fd = fs.openSync(archive, 'r');
+  const fd = archiveFS.openSync(archive, 'r');
   try {
     const prefix = Buffer.alloc(16);
-    if (fs.readSync(fd, prefix, 0, 16, 0) !== 16) throw new Error('Truncated Codex archive.');
+    if (archiveFS.readSync(fd, prefix, 0, 16, 0) !== 16)
+      throw new Error('Truncated Codex archive.');
     const headerSize = prefix.readUInt32LE(4),
       jsonSize = prefix.readUInt32LE(12),
       base = 8 + headerSize;
@@ -25,7 +29,7 @@ function readEntry(archive, name) {
     )
       throw new Error('Invalid Codex archive header.');
     const buffer = Buffer.alloc(jsonSize);
-    if (fs.readSync(fd, buffer, 0, jsonSize, 16) !== jsonSize)
+    if (archiveFS.readSync(fd, buffer, 0, jsonSize, 16) !== jsonSize)
       throw new Error('Truncated Codex archive metadata.');
     let entry = JSON.parse(buffer);
     for (const part of name.split('/')) entry = entry.files?.[part];
@@ -39,15 +43,15 @@ function readEntry(archive, name) {
       size > 128 * 1024 * 1024 ||
       entry.unpacked ||
       entry.link ||
-      base + offset + size > fs.fstatSync(fd).size
+      base + offset + size > archiveFS.fstatSync(fd).size
     )
       throw new Error('Unsupported Codex archive entry.');
     const data = Buffer.alloc(size);
-    if (fs.readSync(fd, data, 0, size, base + offset) !== size)
+    if (archiveFS.readSync(fd, data, 0, size, base + offset) !== size)
       throw new Error('Truncated Codex archive entry.');
     return data;
   } finally {
-    fs.closeSync(fd);
+    archiveFS.closeSync(fd);
   }
 }
 function inspectInstall(directory, platform = process.platform, arch = process.arch) {
