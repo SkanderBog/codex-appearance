@@ -104,6 +104,7 @@ async function build() {
     require('node:url').pathToFileURL(desktopRequire.resolve('@electron/packager')).href
   );
   const { dependencies } = require('../desktop/package.json');
+  const electronNotices = path.join(base, 'electron-notices');
   const packages = await packager({
     dir: source,
     out: path.join(base, 'packages'),
@@ -113,6 +114,13 @@ async function build() {
     platform: process.platform,
     arch: process.arch,
     electronVersion: dependencies.electron,
+    afterExtract: [
+      ({ buildPath }) => {
+        fs.mkdirSync(electronNotices, { recursive: true });
+        for (const name of ['LICENSE', 'LICENSES.chromium.html'])
+          fs.copyFileSync(path.join(buildPath, name), path.join(electronNotices, name));
+      },
+    ],
     // The installed Codex process loads only our reviewed hook by absolute path.
     // Plain companion files avoid assumptions about another Electron's ASAR reader.
     asar: false,
@@ -140,12 +148,7 @@ async function build() {
   const licenses = path.join(resources, 'licenses/electron');
   fs.mkdirSync(licenses, { recursive: true });
   for (const name of ['LICENSE', 'LICENSES.chromium.html']) {
-    const original = path.join(
-      path.dirname(desktopRequire.resolve('electron/package.json')),
-      'dist',
-      name,
-    );
-    fs.copyFileSync(original, path.join(licenses, name));
+    fs.copyFileSync(path.join(electronNotices, name), path.join(licenses, name));
   }
   const executable =
     process.platform === 'darwin'
