@@ -2,17 +2,17 @@
 
 An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental Linux x86_64 release: `0.3.0-alpha.1`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
+**Experimental Linux x86_64 release: `0.3.0-alpha.2`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
 
 ## Try the alpha
 
-1. Download `codex-appearance-0.3.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.3.0-alpha.2-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.3.0-alpha.1-linux-x64.tar.gz
-   cd codex-appearance-0.3.0-alpha.1-linux-x64
+   tar -xzf codex-appearance-0.3.0-alpha.2-linux-x64.tar.gz
+   cd codex-appearance-0.3.0-alpha.2-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -119,7 +119,7 @@ Advanced: `./launch.sh codex` uses Codex's usual UI profile. Quit ordinary Codex
 
 ## Development and verification
 
-Node.js 22+ is used only for development. `npm ci` installs one pinned formatter; the companion has no npm runtime dependencies.
+Node.js 22+ is used only for development. `npm ci` installs one pinned formatter; the companion has no npm runtime dependencies. Dependency installation does not prepare or launch Codex; `npm run prepare-runtime` is the explicit preparation command.
 
 ```sh
 npm ci

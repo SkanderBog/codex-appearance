@@ -108,3 +108,9 @@ class PublicReleaseTests(unittest.TestCase):
             result = subprocess.run(command + ['--uninstall'], env=env, capture_output=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(launcher.read_text(), 'Unrelated launcher')
+
+    def test_dependency_install_has_no_runtime_lifecycle_hook(self):
+        package = json.loads((ROOT / 'package.json').read_text())
+        automatic = {'preinstall', 'install', 'postinstall', 'prepare', 'prepublish'}
+        self.assertFalse(automatic.intersection(package['scripts']))
+        self.assertIn('prepare-runtime', package['scripts'])
