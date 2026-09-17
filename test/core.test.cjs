@@ -117,6 +117,25 @@ test('Disabling removes every Codex style; sidebar remains available', () => {
   assert.equal(cssFor({ enabled: false }, { codex: true }), '');
   assert.doesNotMatch(cssFor({ terminalMode: false }, { codex: true }), /display: none/);
 });
+test('No look produces neutral previews without overwriting the retained settings', () => {
+  const settings = normalize({
+    enabled: false,
+    backgroundMode: 'gradient',
+    preset: 'rose',
+    photoBlur: 12,
+    customColors: true,
+    background: '#FF1122',
+    sidebarOpacity: 0.7,
+  });
+  const original = JSON.stringify(settings);
+  for (const options of [{}, { embedded: true }]) {
+    const css = cssFor(settings, options);
+    assert.match(css, /rgba\(17, 23, 28, 1\)/);
+    assert.doesNotMatch(css, /#FF1122|linear-gradient|url\(|filter:blur/);
+  }
+  assert.equal(JSON.stringify(settings), original);
+  assert.equal(cssFor(settings, { codex: true }), '');
+});
 test('Import rejects malformed, oversized and path-only image references', () => {
   assert.throws(() => decodeBase64('%%%'));
   assert.throws(() => decodeBase64('a'.repeat(30 * 1024 * 1024)));

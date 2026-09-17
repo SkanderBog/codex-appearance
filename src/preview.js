@@ -1,6 +1,6 @@
 'use strict';
 function update(s) {
-  document.body.classList.toggle('full', !s.terminalMode);
+  document.body.classList.toggle('full', !s.enabled || !s.terminalMode);
   document.getElementById('alpha').textContent =
     `${Math.round((s.enabled ? s.opacity : 1) * 100)}%`;
 }

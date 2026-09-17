@@ -340,6 +340,63 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
           readSettings().customColors,
       );
     }
+    const chosenLook = readSettings();
+    const savedBeforeClear = JSON.stringify(library.readLooks());
+    await click('#no-look');
+    check(
+      'No look disables the appearance while retaining the chosen settings and library',
+      !readSettings().enabled &&
+        JSON.stringify({ ...readSettings(), enabled: true }) === JSON.stringify(chosenLook) &&
+        JSON.stringify(library.readLooks()) === savedBeforeClear,
+    );
+    await run('window.companion.read().then(render)');
+    const noLookPreview =
+      await run(`({ selected:document.getElementById('no-look').getAttribute('aria-pressed'),
+      image:getComputedStyle(document.getElementById('sampleWindow'),'::before').backgroundImage,
+      background:getComputedStyle(document.getElementById('sampleWindow')).backgroundColor })`);
+    const noLookFloating = await evaluate(
+      preview.webContents,
+      `({image:getComputedStyle(document.querySelector('.terminal'),'::before').backgroundImage,
+      background:getComputedStyle(document.querySelector('.terminal')).backgroundColor})`,
+    );
+    check(
+      'No look stays selected after refresh and both previews remove the photo',
+      noLookPreview.selected === 'true' &&
+        noLookPreview.image === 'none' &&
+        noLookFloating.image === 'none' &&
+        noLookPreview.background === 'rgb(17, 23, 28)' &&
+        noLookFloating.background === 'rgb(17, 23, 28)',
+      { noLookPreview, noLookFloating },
+    );
+    fs.writeFileSync(
+      path.join(OUTPUT, 'no-look.png'),
+      (await control.webContents.capturePage()).toPNG(),
+    );
+    await click('#undo');
+    check(
+      'Undo after No look restores the exact previous appearance',
+      JSON.stringify(readSettings()) === JSON.stringify(chosenLook),
+    );
+    await click('#redo');
+    check(
+      'Redo returns to No look',
+      !readSettings().enabled &&
+        (await run("document.getElementById('no-look').getAttribute('aria-pressed') === 'true'")),
+    );
+    await click(`[data-built-in="night-shift"]`);
+    check(
+      'Choosing a look again clears the No look selection',
+      readSettings().enabled &&
+        (await run("document.getElementById('no-look').getAttribute('aria-pressed') === 'false'")),
+    );
+    const savedLook = library.readLooks()[0];
+    await click(`[data-look="${savedLook.id}"]`);
+    await click('#no-look');
+    check(
+      'No look also removes an applied saved look',
+      !readSettings().enabled && JSON.stringify(library.readLooks()) === savedBeforeClear,
+    );
+    await click(`[data-built-in="night-shift"]`);
     fs.writeFileSync(
       path.join(OUTPUT, 'included-looks.png'),
       (await control.webContents.capturePage()).toPNG(),

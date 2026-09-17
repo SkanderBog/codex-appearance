@@ -263,7 +263,6 @@ handle('appearance:copy-theme', () => {
 handle('appearance:launch', () => {
   if (launched && launched.exitCode === null)
     return { ok: true, message: 'The separate Codex test window is already running.' };
-  commit({ enabled: true });
   const file = fs.openSync(path.join(STATE, 'codex-test.log'), 'a', 0o600);
   launched = spawn(path.join(ROOT, 'launch.sh'), ['codex-test'], {
     cwd: ROOT,

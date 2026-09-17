@@ -22,13 +22,13 @@ Captured from the Linux companion and its floating preview. The sample text and 
 
 ## Try the alpha
 
-1. Download `codex-appearance-0.4.0-alpha.2-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.4.0-alpha.3-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.4.0-alpha.2-linux-x64.tar.gz
-   cd codex-appearance-0.4.0-alpha.2-linux-x64
+   tar -xzf codex-appearance-0.4.0-alpha.3-linux-x64.tar.gz
+   cd codex-appearance-0.4.0-alpha.3-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:
@@ -85,6 +85,8 @@ In Photo mode, **Match colors to photo** suggests a dark background, text, and a
 **Home artwork** and **Conversation artwork** independently control how strongly the photo shows on each screen. Zero covers the photo with the palette background; **Background opacity** still controls desktop transparency. Use **Home / Conversation** in the live preview, or the screen button in the floating preview, to compare both treatments.
 
 Under **Layout**, adjust sidebar, header, and input opacity independently. **Conversation shading** adds a background behind message areas. These controls change background color alpha, never text opacity. Existing looks start with these new surface controls at zero and artwork strength at 100%, preserving their appearance.
+
+**No look** at the top of the **Looks** page switches off the appearance layer and restores the normal Codex style. Both previews become plain. Your custom settings and saved looks are retained; choose a look again, enable **Style active**, or use Undo to bring the appearance back. The choice persists when reopening the companion or launching styled Codex.
 
 The **Looks** page includes Cathedral Foundry, Arcade Signal, and Night Shift, adapted from individually MIT-licensed Codex Habitat themes. Applying one replaces appearance settings and can be undone. Their artwork and theme attribution travels with exported looks; see [third-party notices](THIRD_PARTY_NOTICES.md).
 

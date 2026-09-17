@@ -67,6 +67,12 @@ async function integrationCheck(win, update) {
       ready.composer && ready.sidebar !== null,
       ready,
     );
+    if (!original.enabled)
+      check(
+        'No look stays disabled when styled Codex starts',
+        !readSettings().enabled && !ready.layer && !ready.controls,
+        ready,
+      );
     saveSettings({
       ...original,
       enabled: true,

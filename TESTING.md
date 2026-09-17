@@ -6,6 +6,13 @@ Automated coverage includes settings validation, injection/path rejection, all p
 
 GUI self-tests exercise actual controls, drag-and-drop image import, resizing, alpha rendering, saved-look import/export, undo, reset, and layout. An optional integration check exercises real Codex without sending prompts. Reports and screenshots stay local.
 
+## 0.4.0-alpha.3 No look checks (2026-09-17)
+
+- All 22 Node and 21 Python regression tests passed. Disabled previews render a neutral, opaque background without mutating stored look settings.
+- All 54 companion graphical assertions passed, including clearing included and saved looks, preserving the saved-look library and preferences, the selected indicator after refresh, photo removal from both previews, undo, redo, and choosing a look again.
+- All 27 real-Codex assertions passed from a temporary profile initially set to No look, including startup with no injected style or companion controls and subsequent layout recovery checks.
+- The fresh source archive passed syntax, formatting, the 70-file manifest audit, and graphical/integration checks. Compatibility and remaining platform coverage are unchanged.
+
 ## 0.4.0-alpha.2 optimization checks (2026-09-17)
 
 - All 21 Node and 21 Python regression tests passed, including real atomic settings-file replacement, ignored unrelated file changes, bounded update queues, and photo-cache invalidation.

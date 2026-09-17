@@ -78,10 +78,12 @@ function render(next, css = true) {
   }
   renderedPhoto = data.photoData;
   $('sample-alpha').textContent = Math.round((s.enabled ? s.opacity : 1) * 100) + '%';
-  $('sample-sidebar').hidden = s.terminalMode && !sampleReveal;
-  $('sampleWindow').style.maxWidth = s.contentWidth === 'comfortable' ? '320px' : '100%';
+  $('sample-sidebar').hidden = s.enabled && s.terminalMode && !sampleReveal;
+  $('sampleWindow').style.maxWidth =
+    s.enabled && s.contentWidth === 'comfortable' ? '320px' : '100%';
+  $('no-look').setAttribute('aria-pressed', String(!s.enabled));
   $('look-label').textContent = !s.enabled
-    ? 'Style paused'
+    ? 'No look · Codex style'
     : (s.customColors ? 'Custom' : p.name) +
       ' / ' +
       s.backgroundMode[0].toUpperCase() +
@@ -311,6 +313,8 @@ $('launch').onclick = () =>
   });
 $('restore').onclick = () =>
   action(() => api.restore(), 'Appearance layer off. Your custom settings are kept.');
+$('no-look').onclick = () =>
+  action(() => api.restore(), 'No look applied. Choose a look or use Undo to bring it back.');
 $('reset').onclick = () =>
   action(() => api.reset(), 'Default settings restored. Use Undo to recover the previous look.');
 $('undo').onclick = () => action(() => api.undo(), 'Previous appearance restored.');

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0-alpha.3
+
+- Add a visible No look option to restore the normal Codex style while retaining preferences and saved looks.
+- Show neutral previews while no look is active, with a selected-state indicator and undo/redo support.
+- Preserve the disabled appearance state when opening styled Codex instead of silently reapplying a look.
+
 ## 0.4.0-alpha.2
 
 - Replace continuous settings polling with directory change notifications, retaining a slower fallback for filesystems without notifications.

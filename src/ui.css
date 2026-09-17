@@ -212,6 +212,29 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+.no-look {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ffffff22;
+  border-radius: 7px;
+  background: #18201b;
+  text-align: left;
+}
+.no-look strong,
+.no-look small {
+  display: block;
+}
+.no-look small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.no-look[aria-pressed='true'] {
+  border-color: var(--mint);
+  background: #254033;
+}
 .built-in-look {
   min-width: 0;
   padding: 0 0 10px;

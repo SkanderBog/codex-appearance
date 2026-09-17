@@ -185,9 +185,12 @@ function rgb(hex) {
   return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ');
 }
 function cssFor(value, { codex = false, embedded = false } = {}) {
-  const s = normalize(value),
+  const requested = normalize(value);
+  if (!requested.enabled && codex) return '';
+  // A paused look is retained in settings, but should not remain visible in
+  // either preview. Use a neutral, opaque sample for the native-style state.
+  const s = requested.enabled ? requested : { ...DEFAULTS, enabled: false },
     p = paletteFor(s);
-  if (!s.enabled && codex) return '';
   const alpha = s.enabled ? s.opacity : 1;
   const photo = s.backgroundMode === 'photo' ? assetDataURL(s.photo) : '';
   const image = photo
