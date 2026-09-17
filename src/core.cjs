@@ -266,6 +266,8 @@ ${image ? `${surface}::before { content:""; position:absolute; inset:0; z-index:
  --app-color-background-button-primary:var(--companion-accent) !important; --app-color-background-button-primary-hover:var(--companion-accent) !important; --app-color-background-button-primary-active:var(--companion-accent) !important;
  --app-color-text-button-primary:var(--companion-solid) !important; --app-color-text-on-accent:var(--companion-solid) !important;
  --app-color-text-button-secondary:var(--companion-fg) !important; --app-color-text-button-tertiary:var(--companion-fg) !important;
+ --color-background-primary-solid:var(--companion-accent) !important; --color-background-primary-solid-hover:var(--companion-accent) !important; --color-background-primary-solid-active:var(--companion-accent) !important;
+ --color-text-primary-solid:var(--companion-solid) !important;
  --app-color-background-surface:transparent !important; --app-color-background-surface-under:transparent !important;
  --app-color-background-elevated-primary:var(--companion-solid) !important; --app-color-background-elevated-secondary:var(--companion-solid) !important;
  --app-color-background-application-menu:var(--companion-solid) !important;

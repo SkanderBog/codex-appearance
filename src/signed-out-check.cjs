@@ -72,6 +72,8 @@ async function integrationCheck(win, update, native = {}) {
     try { if(sheet)sheet.disabled=true; baseline=appearance(); }
     finally { if(sheet)sheet.disabled=disabled; }
     return { login:!!login, reachable:!!login && (target===login || login.contains(target)),
+      loginForeground:login ? getComputedStyle(login).color : null,
+      loginBackground:login ? getComputedStyle(login).backgroundColor : null,
       styled:!!style?.textContent,
       controls:!!document.getElementById('companion-access'),
       appearance:styled, baseline };
@@ -123,6 +125,12 @@ async function integrationCheck(win, update, native = {}) {
         },
       );
       check('Startup foreground tree stays fully opaque', initial.appearance.opacity === '1');
+      check(
+        'Sign-in button uses dark text on the saved accent surface',
+        initial.loginForeground === 'rgb(27, 21, 16)' &&
+          initial.loginBackground === 'rgb(242, 189, 114)',
+        { foreground: initial.loginForeground, background: initial.loginBackground },
+      );
       report.nativeBackgroundGetter = typeof win.getBackgroundColor === 'function';
       let nativeBackground;
       if (report.nativeBackgroundGetter) {
