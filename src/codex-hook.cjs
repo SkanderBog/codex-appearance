@@ -139,7 +139,11 @@ class StyledWindow extends OriginalWindow {
         setTimeout(async () => {
           if (this.isDestroyed()) return;
           try {
-            const { integrationCheck } = require('./integration-check.cjs');
+            const { integrationCheck } = require(
+              process.env.COMPANION_SIGNED_OUT_CHECK === '1'
+                ? './signed-out-check.cjs'
+                : './integration-check.cjs',
+            );
             state.integration = await integrationCheck(this, () => update(this));
             log();
             if (process.env.COMPANION_CHECK_EXIT === '1')

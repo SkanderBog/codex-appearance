@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit an explicit source manifest and build a reproducible, source-only Linux alpha."""
+"""Audit an explicit manifest and build reproducible, source-only desktop archives."""
 import argparse
 import gzip
 import hashlib
@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import tarfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN = {'.git', '.codex', '.agents', '.runtime', '.state', 'work', 'outputs',
@@ -103,7 +104,7 @@ def build(root=ROOT, names=None):
                 data = (root / name).read_bytes()
                 info = tarfile.TarInfo(prefix + '/' + name)
                 info.size = len(data)
-                info.mode = 0o755 if name.endswith('.sh') else 0o644
+                info.mode = 0o755 if name.endswith(('.sh', '.command')) else 0o644
                 info.mtime = info.uid = info.gid = 0
                 info.uname = info.gname = ''
                 tar.addfile(info, io.BytesIO(data))
@@ -115,8 +116,26 @@ def build(root=ROOT, names=None):
         for member, name in zip(members, names):
             if not member.isfile() or tar.extractfile(member).read() != (root / name).read_bytes():
                 raise ValueError('Archive content mismatch.')
-    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-    (dist / 'SHA256SUMS.txt').write_text(f'{digest}  {archive.name}\n')
+    archives = [archive]
+    for platform in ('macos', 'windows'):
+        label = f'codex-appearance-{version}-{platform}-editor-preview'
+        target = dist / (label + '.zip')
+        with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as zipped:
+            for name in names:
+                info = zipfile.ZipInfo(label + '/' + name, date_time=(1980, 1, 1, 0, 0, 0))
+                info.create_system = 3
+                info.external_attr = (0o100755 if name.endswith(('.sh', '.command')) else 0o100644) << 16
+                info.compress_type = zipfile.ZIP_DEFLATED
+                zipped.writestr(info, (root / name).read_bytes())
+        with zipfile.ZipFile(target) as zipped:
+            if zipped.namelist() != [label + '/' + n for n in names]:
+                raise ValueError('Editor archive manifest mismatch.')
+            for name in names:
+                if zipped.read(label + '/' + name) != (root / name).read_bytes():
+                    raise ValueError('Editor archive content mismatch.')
+        archives.append(target)
+    (dist / 'SHA256SUMS.txt').write_text(''.join(
+        f'{hashlib.sha256(file.read_bytes()).hexdigest()}  {file.name}\n' for file in archives))
     return archive
 
 

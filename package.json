@@ -1,20 +1,21 @@
 {
   "name": "codex-appearance-companion",
-  "version": "0.4.0-alpha.3",
+  "version": "0.5.0-alpha.1",
   "private": true,
-  "description": "Unofficial Linux appearance companion for compatible Codex desktop installations",
+  "description": "Unofficial Codex appearance companion with experimental standalone desktop editors",
   "scripts": {
     "start": "./launch.sh",
     "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
     "install-desktop": "python3 scripts/install.py",
     "check": "node scripts/check.cjs",
-    "format": "prettier --write src scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
-    "format:check": "prettier --check src scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
+    "format": "prettier --write src desktop/*.cjs desktop/*.json scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
+    "format:check": "prettier --check src desktop/*.cjs desktop/*.json scripts/*.cjs test/*.cjs *.json *.md .github/**/*.yml",
     "benchmark": "node scripts/benchmark.cjs",
     "doctor": "python3 scripts/doctor.py",
     "release:check": "python3 scripts/release.py --check",
     "release:build": "python3 scripts/release.py",
-    "prepare-runtime": "python3 scripts/prepare.py"
+    "prepare-runtime": "python3 scripts/prepare.py",
+    "start:desktop": "node scripts/start-desktop.cjs"
   },
   "license": "MIT",
   "engines": {

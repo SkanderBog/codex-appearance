@@ -364,7 +364,7 @@ document.addEventListener('keydown', (e) => {
       'input:not([type="range"]):not([type="checkbox"]):not([type="color"]), textarea, [contenteditable="true"]',
     );
   if (
-    e.ctrlKey &&
+    (e.ctrlKey || e.metaKey) &&
     !e.altKey &&
     !$('save-dialog').open &&
     !textField &&
@@ -374,11 +374,11 @@ document.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'y' || e.shiftKey) $('redo').click();
     else $('undo').click();
   }
-  if (e.ctrlKey && e.key.toLowerCase() === 's') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
     if (!$('save-dialog').open) openSave();
   }
-  if (e.ctrlKey && e.key.toLowerCase() === 'o') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
     e.preventDefault();
     page('background');
     action(() => api.pickPhoto(), 'Photo added locally.');
@@ -388,7 +388,14 @@ api
   .read()
   .then((result) => {
     data = result;
-    $('version').textContent = 'CODEX ' + data.version;
+    $('version').textContent = data.standalone ? 'STANDALONE EDITOR' : 'CODEX ' + data.version;
+    if (!data.canLaunchCodex) {
+      $('launch').disabled = true;
+      $('launch').textContent = 'Codex styling unavailable';
+      $('launch').title = 'Native Codex styling has not been validated in this edition.';
+      $('runtime-note').textContent =
+        'Edit and preview without a Codex account or installation. Applying backgrounds and layout to Codex is not available in this edition. Export your looks for a supported installation.';
+    }
     $('app-version').textContent = 'Appearance ' + data.appVersion;
     for (const look of data.builtIns) {
       const button = document.createElement('button');

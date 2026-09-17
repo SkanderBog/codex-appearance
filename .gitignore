@@ -12,3 +12,5 @@ Start Companion.desktop
 .env.*
 .codex/
 .agents/
+.venv/
+.ci/

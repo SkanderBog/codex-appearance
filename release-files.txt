@@ -21,9 +21,14 @@ assets/themes/catalog.json
 assets/themes/night-shift.jpg
 assets/themes/workbench.jpg
 compatibility.json
+desktop/main.cjs
+desktop/package-lock.json
+desktop/package.json
 docs/screenshots/background-controls.png
 docs/screenshots/floating-preview.png
 docs/screenshots/palettes.png
+launch-macos.command
+launch-windows.cmd
 launch.sh
 package-lock.json
 package.json
@@ -40,6 +45,7 @@ scripts/prepare-photo.py
 scripts/prepare.py
 scripts/release.py
 scripts/sandbox-env.sh
+scripts/start-desktop.cjs
 scripts/stop-test.py
 src/codex-hook.cjs
 src/controls.cjs
@@ -56,11 +62,14 @@ src/preload.cjs
 src/preview.css
 src/preview.html
 src/preview.js
+src/runtime-info.cjs
 src/self-test.cjs
+src/signed-out-check.cjs
 src/ui.css
 src/ui.js
 src/updates.cjs
 test/core.test.cjs
+test/desktop.test.cjs
 test/fixtures/background.png
 test/fixtures/background.webp
 test/test_archive.py

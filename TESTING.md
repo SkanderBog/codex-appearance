@@ -1,10 +1,18 @@
 # Alpha verification
 
-The public alpha is limited to Linux x86_64 and the reviewed Codex 26.901.41123 integration fingerprint.
+Styled Codex integration is limited to Linux x86_64 and the reviewed Codex 26.901.41123 fingerprint. Version 0.5.0 adds separate experimental standalone editor editions for macOS and Windows; they do not apply styles inside native Codex.
 
 Automated coverage includes settings validation, injection/path rejection, all palettes, bounded image decoding and EXIF removal, source-archive preservation, invalid archive rejection, sandbox-helper selection, path portability, unknown-build rejection, installer ownership checks, manifest exclusion, credential detection, and deterministic release archives.
 
 GUI self-tests exercise actual controls, drag-and-drop image import, resizing, alpha rendering, saved-look import/export, undo, reset, and layout. An optional integration check exercises real Codex without sending prompts. Reports and screenshots stay local.
+
+## 0.5.0-alpha.1 desktop and sign-in checks (2026-09-17)
+
+- All 24 Node and 21 Python regression tests passed locally, including native Node/Python storage agreement, standalone startup without Codex metadata, and deterministic source ZIP contents.
+- The standalone editor ran locally with official Electron 44.4.1, independent of a Codex installation or account. Graphical checks cover the existing appearance workflows and blocking unsupported styled-Codex launch in both the UI and IPC.
+- A new empty authentication directory with file-backed credential storage and a separate Codex UI profile passed six signed-out checks: visible login control, applied styling, reachable sign-in, successful layout validation, No look cleanup, and reachable sign-in after restoration. The existing account was untouched; no prompts were sent.
+- Native CI runs the Node suite, photo decoding tests, and the standalone graphical suite on macOS 14 and Windows Server 2022 with Node 22, Python 3.12, and pinned Electron 44.4.1. Native run results are recorded after verification below.
+- The Mac/Windows packages are source previews requiring local dependency installation, not signed/notarized installers. Native Codex injection, native palette import acceptance, physical-device compositing, native file-picker interaction, Mac Intel, and Windows ARM64 remain unverified.
 
 ## 0.4.0-alpha.3 No look checks (2026-09-17)
 
@@ -52,5 +60,5 @@ The graphical tests used Ubuntu GNOME/Wayland with XWayland and Codex 26.901.411
 
 - A second physical Linux machine and other desktop/compositor/graphics combinations.
 - Transparent-window resizing and maximization across those environments.
-- Native Wayland support, ARM64, macOS, and Windows (not supported by this alpha).
+- Native Wayland and ARM64 Linux integration; native Codex integration on macOS and Windows.
 - Future Codex builds (explicitly rejected until reviewed).

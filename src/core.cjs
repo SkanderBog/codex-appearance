@@ -29,13 +29,31 @@ const PRESETS = Object.freeze(
     ]),
   ),
 );
-const FONTS = Object.freeze({
-  mono: 'DejaVu Sans Mono',
-  liberation: 'Liberation Mono',
-  nimbus: 'Nimbus Mono PS',
-  sans: 'DejaVu Sans',
-  serif: 'DejaVu Serif',
-});
+const FONTS = Object.freeze(
+  process.platform === 'darwin'
+    ? {
+        mono: 'Menlo',
+        liberation: 'Monaco',
+        nimbus: 'Courier',
+        sans: 'Helvetica Neue',
+        serif: 'Georgia',
+      }
+    : process.platform === 'win32'
+      ? {
+          mono: 'Consolas',
+          liberation: 'Courier New',
+          nimbus: 'Lucida Console',
+          sans: 'Segoe UI',
+          serif: 'Georgia',
+        }
+      : {
+          mono: 'DejaVu Sans Mono',
+          liberation: 'Liberation Mono',
+          nimbus: 'Nimbus Mono PS',
+          sans: 'DejaVu Sans',
+          serif: 'DejaVu Serif',
+        },
+);
 const DEFAULTS = Object.freeze({
   version: 3,
   preset: 'graphite',

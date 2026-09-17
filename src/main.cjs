@@ -20,7 +20,7 @@ const {
 } = require('./core.cjs');
 const library = require('./library.cjs');
 const dialog = require('./file-dialogs.cjs');
-const { RUNTIME } = require('./paths.cjs');
+const { standalone, runtimeInfo } = require('./runtime-info.cjs');
 const history = [];
 const future = [];
 let lastChange = 0;
@@ -124,7 +124,7 @@ function snapshot() {
     canUndo: history.length > 0,
     canRedo: future.length > 0,
     appVersion: require('../package.json').version,
-    version: JSON.parse(fs.readFileSync(path.join(RUNTIME, 'source.json'), 'utf8')).version,
+    ...runtimeInfo(),
   };
 }
 function commit(patch, force = false) {
@@ -261,6 +261,10 @@ handle('appearance:copy-theme', () => {
   return true;
 });
 handle('appearance:launch', () => {
+  if (standalone)
+    throw new Error(
+      'Styled Codex is not available in the standalone editor. You can edit, preview, save, and export looks locally.',
+    );
   if (launched && launched.exitCode === null)
     return { ok: true, message: 'The separate Codex test window is already running.' };
   const file = fs.openSync(path.join(STATE, 'codex-test.log'), 'a', 0o600);

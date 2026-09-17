@@ -8,6 +8,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,8 +63,20 @@ class PublicReleaseTests(unittest.TestCase):
             (root / 'release-files.txt').write_text('package.json\nlaunch.sh\nrelease-files.txt\n')
             (root / '.state').mkdir(); (root / '.state/private-photo.jpg').write_bytes(b'private')
             first = release.build(root).read_bytes()
+            editor_archives = {p.name: p.read_bytes() for p in (root / 'dist').glob('*.zip')}
             archive = release.build(root)
             self.assertEqual(first, archive.read_bytes())
+            self.assertEqual(len(editor_archives), 2)
+            for name, data in editor_archives.items():
+                file = root / 'dist' / name
+                self.assertEqual(data, file.read_bytes())
+                with zipfile.ZipFile(file) as zipped:
+                    self.assertEqual(len(zipped.infolist()), 3)
+                    for member in zipped.infolist():
+                        self.assertNotIn('.state', member.filename)
+                        if member.filename.endswith('/launch.sh'):
+                            self.assertEqual(member.external_attr >> 16, 0o100755)
+            self.assertEqual(len((root / 'dist/SHA256SUMS.txt').read_text().splitlines()), 3)
             with tarfile.open(archive) as tar:
                 for item in tar.getmembers():
                     self.assertNotIn('.state', item.name)

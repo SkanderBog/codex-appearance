@@ -1,8 +1,8 @@
-# Codex Appearance — Linux alpha
+# Codex Appearance — desktop alpha
 
 An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, three included scenic looks, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental Linux x86_64 release: `0.4.0-alpha.1`.** The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
+**Experimental release: `0.5.0-alpha.1`.** Linux x86_64 supports styled Codex. macOS and Windows have standalone editor previews. The integration is tested against **Codex 26.901.41123** on one Ubuntu GNOME/Wayland installation using XWayland. Other Codex builds are rejected. Other Linux desktops, graphics drivers, and machines still need testing. This project is not affiliated with or endorsed by OpenAI.
 
 ## Screenshots
 
@@ -20,15 +20,48 @@ Captured from the Linux companion and its floating preview. The sample text and 
 
 ![Floating appearance preview with a blurred landscape background and sharp Amber text](docs/screenshots/floating-preview.png)
 
-## Try the alpha
+## Platform support and sign-in
 
-1. Download `codex-appearance-0.4.0-alpha.3-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+| Edition                    | Edit, preview, save and export looks | Apply backgrounds and layout inside Codex |
+| -------------------------- | ------------------------------------ | ----------------------------------------- |
+| Linux x86_64 integration   | Yes                                  | Reviewed Codex 26.901.41123 only          |
+| macOS standalone preview   | Yes                                  | Not implemented                           |
+| Windows standalone preview | Yes                                  | Not implemented                           |
+
+**No login is needed to edit settings.** Palettes, photos, saved looks, and previews are local. On the supported Linux build, styling also applies to the signed-out screen: launch the companion, choose a look, and open styled Codex. The sign-in controls remain available; **Looks → No look** restores the normal appearance. Chat and model access still require Codex authentication. Signing in is handled by Codex itself, not this companion. The Linux launcher needs a compatible Codex installation, but the standalone editor does not.
+
+The native editor shares the existing interface and portable look format. It uses platform fonts, storage directories, and Electron file dialogs, with Command shortcuts on Mac. **Open styled Codex** is disabled in the standalone edition. Copying a palette produces the tested Linux build's native import format; its acceptance by native Mac/Windows Codex versions is not yet verified. Photos, translucency, and layout controls in these editions affect previews only.
+
+macOS and Windows Codex injection is a separate, unfinished port. Their app bundles, signatures, archive integrity, and internal window layout need build-specific review and tests. These previews do not modify Codex or bypass signature checks.
+
+## Try the macOS or Windows editor preview
+
+These are source packages, not signed application installers. Install Node.js 22.12+ and Python 3.10+ first. Download the matching `macos-editor-preview.zip` or `windows-editor-preview.zip` plus `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases), compare the archive's SHA-256 with the matching checksum line, then extract it. Use `shasum -a 256 <archive>` on Mac or `Get-FileHash <archive> -Algorithm SHA256` in PowerShell.
+
+From the extracted folder, run:
+
+```sh
+npm ci --prefix desktop
+```
+
+This explicit installation downloads the pinned official Electron runtime and its dependencies; no Codex files are included. Then:
+
+- **macOS:** create a local Python environment with `python3 -m venv .venv`, install Pillow with `.venv/bin/python -m pip install Pillow==11.3.0`, and run `COMPANION_PYTHON="$PWD/.venv/bin/python" bash launch-macos.command`. This also works when Finder does not expose your Node/Python PATH. Alternatively set `COMPANION_PYTHON` to an existing Pillow-enabled Python.
+- **Windows (PowerShell):** run `py -3 -m venv .venv`, then `.\.venv\Scripts\python.exe -m pip install Pillow==11.3.0`. Set `$env:COMPANION_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path` and run `.\launch-windows.cmd`.
+
+The editor runs locally after setup; neither Codex nor a Codex account is required. Electron selects the runtime for the machine running `npm ci`; do not copy `desktop/node_modules` between operating systems or architectures. Native file picking and desktop compositing still need broader manual testing. macOS Intel and Windows ARM64 are not yet validated.
+
+Native settings, photos, saved looks and editor profiles live in `~/Library/Application Support/codex-appearance` on Mac or `%LOCALAPPDATA%\codex-appearance` on Windows. Close the editor and remove the extracted source/runtime folder to uninstall; delete its data directory separately to remove saved settings. The Linux-only installer and runtime preparation scripts are not used by these editions.
+
+## Try the Linux integration alpha
+
+1. Download `codex-appearance-0.5.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
-   sha256sum -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.4.0-alpha.3-linux-x64.tar.gz
-   cd codex-appearance-0.4.0-alpha.3-linux-x64
+   sha256sum --ignore-missing -c SHA256SUMS.txt
+   tar -xzf codex-appearance-0.5.0-alpha.1-linux-x64.tar.gz
+   cd codex-appearance-0.5.0-alpha.1-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:

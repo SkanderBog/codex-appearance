@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.1
+
+- Add experimental standalone macOS and Windows editors using pinned official Electron, without a Codex installation or account.
+- Share local looks, photos, previews, undo/redo, and No look across editions; use native paths, fonts, dialogs, and Mac Command shortcuts.
+- Disable styled Codex launch in standalone editions until native integration is reviewed and tested.
+- Add deterministic native source ZIP archives and native-platform CI jobs.
+- Verify signed-out Linux styling and restoration with an isolated authentication directory, without signing out the current account.
+
 ## 0.4.0-alpha.3
 
 - Add a visible No look option to restore the normal Codex style while retaining preferences and saved looks.

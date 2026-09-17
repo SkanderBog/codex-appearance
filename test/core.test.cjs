@@ -6,6 +6,7 @@ const {
   cssFor,
   PRESETS,
   DEFAULTS,
+  FONTS,
   themeString,
   assetDataURL,
   paletteFor,
@@ -111,7 +112,7 @@ test('Custom colors and installed fonts export correctly', () => {
   assert.ok(share.startsWith('codex-theme-v1:'));
   const data = JSON.parse(share.slice(15));
   assert.equal(data.theme.surface, '#112233');
-  assert.equal(data.theme.fonts.ui, 'Liberation Mono');
+  assert.equal(data.theme.fonts.ui, FONTS.liberation);
 });
 test('Disabling removes every Codex style; sidebar remains available', () => {
   assert.equal(cssFor({ enabled: false }, { codex: true }), '');

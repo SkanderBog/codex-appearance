@@ -10,7 +10,7 @@ for (const name of fs
   const file = path.join(root, name);
   const args = /\.(cjs|js)$/.test(name)
     ? [process.execPath, ['--check', file]]
-    : name.endsWith('.sh')
+    : /\.(sh|command)$/.test(name)
       ? ['bash', ['-n', file]]
       : null;
   if (args) {

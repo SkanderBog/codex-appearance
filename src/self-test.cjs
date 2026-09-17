@@ -8,6 +8,7 @@ const {
   STATE,
   ASSETS,
   DEFAULTS,
+  FONTS,
   readSettings,
   saveSettings,
   assetDataURL,
@@ -44,6 +45,24 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
     await sleep(350);
   };
   try {
+    if (process.env.COMPANION_STANDALONE === '1') {
+      check(
+        'Standalone editor starts without Codex runtime metadata',
+        await run(
+          'window.companion.read().then(s => s.standalone && !s.canLaunchCodex && s.version === null)',
+        ),
+      );
+      check(
+        'Unavailable styled Codex launch is disabled',
+        await run("document.getElementById('launch').disabled"),
+      );
+      check(
+        'Standalone IPC rejects styled Codex launch',
+        await run(
+          "window.companion.launch().then(() => false, e => e.message.includes('not available'))",
+        ),
+      );
+    }
     saveSettings(DEFAULTS);
     await run('window.companion.read().then(render)');
     await sleep(300);
@@ -87,7 +106,7 @@ async function runSelfTest({ control, openPreview, getPreview, notify, nativeIma
     );
     check(
       'Native preview uses selected font and size',
-      rendering.font.includes('Liberation Mono') && rendering.size === '17px',
+      rendering.font.includes(FONTS.liberation) && rendering.size === '17px',
       rendering,
     );
     await click('[data-page="background"]');

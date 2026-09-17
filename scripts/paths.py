@@ -1,8 +1,9 @@
-"""Shared Linux storage paths. No directories are created by importing this module."""
+"""Shared native storage paths. No directories are created by importing this module."""
 import hashlib
 import os
 from pathlib import Path
 import sys
+import platform
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,8 +16,14 @@ def absolute_env(name, fallback):
 
 
 def storage_paths(root=ROOT):
-    data = absolute_env('XDG_DATA_HOME', Path.home() / '.local/share')
-    cache = absolute_env('XDG_CACHE_HOME', Path.home() / '.cache')
+    if platform.system() == 'Darwin':
+        data, cache = Path.home() / 'Library/Application Support', Path.home() / 'Library/Caches'
+    elif platform.system() == 'Windows':
+        data = absolute_env('LOCALAPPDATA', Path.home() / 'AppData/Local')
+        cache = data / 'Cache'
+    else:
+        data = absolute_env('XDG_DATA_HOME', Path.home() / '.local/share')
+        cache = absolute_env('XDG_CACHE_HOME', Path.home() / '.cache')
     # Keep existing local users' settings in place; new installs use XDG storage.
     legacy = root / '.state'
     default_state = legacy if (legacy / 'appearance.json').is_file() else data / 'codex-appearance'

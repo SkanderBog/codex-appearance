@@ -1,8 +1,8 @@
 # Privacy
 
-The companion implements local appearance controls. It does not implement telemetry, analytics, cloud sync, remote updates, credential collection, or a photo upload endpoint. The installed Codex application continues to use its own services, credentials, and policies when launched.
+The companion implements local appearance controls. It does not implement telemetry, analytics, cloud sync, remote updates, credential collection, or a photo upload endpoint. Installing the optional standalone runtime downloads Electron and its npm dependencies; ordinary editing and previews are local and do not open Codex or access its credentials. The installed Codex application continues to use its own services, credentials, and policies when launched.
 
-Settings and saved looks are JSON files; imported photos are stored locally. State directories are created with owner-only permissions, and new settings, image, and export files use owner-only permissions. Existing file permissions may differ. Profile contents are managed by the installed runtime.
+Settings and saved looks are JSON files; imported photos are stored locally. On POSIX systems, state directories are created with owner-only permissions, and new settings, image, and export files use owner-only permissions. On Windows, access follows the current user profile and inherited filesystem ACLs; POSIX mode bits do not establish a Windows ACL. Existing file permissions may differ. Profile contents are managed by the installed runtime.
 
 Photos are re-encoded to JPEG with EXIF metadata removed. Portable look exports use a neutral photo filename, but contain the visible photo and the chosen look name. Inspect both before sharing. Clearing the current background keeps stored photos so saved looks still work.
 

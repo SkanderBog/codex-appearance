@@ -11,8 +11,18 @@ function absoluteEnv(name, fallback) {
   return value;
 }
 
-const data = absoluteEnv('XDG_DATA_HOME', path.join(os.homedir(), '.local/share'));
-const cache = absoluteEnv('XDG_CACHE_HOME', path.join(os.homedir(), '.cache'));
+const data =
+  process.platform === 'darwin'
+    ? path.join(os.homedir(), 'Library/Application Support')
+    : process.platform === 'win32'
+      ? absoluteEnv('LOCALAPPDATA', path.join(os.homedir(), 'AppData/Local'))
+      : absoluteEnv('XDG_DATA_HOME', path.join(os.homedir(), '.local/share'));
+const cache =
+  process.platform === 'darwin'
+    ? path.join(os.homedir(), 'Library/Caches')
+    : process.platform === 'win32'
+      ? path.join(data, 'Cache')
+      : absoluteEnv('XDG_CACHE_HOME', path.join(os.homedir(), '.cache'));
 const legacy = path.join(ROOT, '.state');
 const STATE = absoluteEnv(
   'COMPANION_STATE_DIR',

@@ -45,8 +45,20 @@ function pick(options, save = false) {
     });
   });
 }
-module.exports = {
+const gtkDialogs = {
   showOpenDialog: (_parent, options) => pick(options),
   showSaveDialog: (_parent, options) => pick(options, true),
   cancelAll: () => active?.kill(),
 };
+// The copied Linux Codex runtime needs GTK dialogs. Standalone Electron exposes
+// native macOS/Windows dialogs, avoiding any dependency on Zenity there.
+module.exports =
+  process.env.COMPANION_STANDALONE === '1' || process.platform !== 'linux'
+    ? {
+        showOpenDialog: (parent, options) =>
+          require('electron').dialog.showOpenDialog(parent, options),
+        showSaveDialog: (parent, options) =>
+          require('electron').dialog.showSaveDialog(parent, options),
+        cancelAll: () => {},
+      }
+    : gtkDialogs;
