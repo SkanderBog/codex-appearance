@@ -49,7 +49,7 @@ jobs:
       - name: Test packaged one-click native Codex integration
         run: node scripts/test-native-packaged.cjs
       - name: Verify installed Codex archive and signatures remain unchanged
-        if: always()
+        if: always() && env.COMPANION_CODEX_INSTALL != ''
         run: python scripts/prepare-native-ci.py --work .ci/native-codex --verify-unchanged
       - name: Archive tested prototype and checksum
         run: python scripts/archive-desktop.py

@@ -65,8 +65,10 @@ def validate_zip(path):
 
 
 def powershell(script, env):
+    child_env = {key: value for key, value in os.environ.items()
+                 if key.lower() != 'psmodulepath'}
     return run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', script],
-               env={**os.environ, **env})
+               env={**child_env, **env})
 
 
 def verify_signature(install, system):
@@ -74,7 +76,7 @@ def verify_signature(install, system):
         run(['codesign', '--verify', '--deep', '--strict', str(install)])
         # The bundle identity applies to the outer app, not its nested helpers.
         run(['codesign', '--verify', '--strict', '-R',
-             'anchor apple generic and certificate leaf[subject.OU] = "2DC432GLL2" '
+             '=anchor apple generic and certificate leaf[subject.OU] = "2DC432GLL2" '
              'and identifier "com.openai.codex"', str(install)])
     else:
         powershell(

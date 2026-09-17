@@ -96,7 +96,17 @@ function discoverInstall(platform = process.platform) {
         '-Command',
         'Get-AppxPackage -Name OpenAI.Codex | Select-Object -ExpandProperty InstallLocation',
       ],
-      { encoding: 'utf8', windowsHide: true, timeout: 10000, maxBuffer: 65536 },
+      {
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 10000,
+        maxBuffer: 65536,
+        // PowerShell 7's inherited module paths can break Windows PowerShell's
+        // built-in Appx module. Let the child initialize its own default paths.
+        env: Object.fromEntries(
+          Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'psmodulepath'),
+        ),
+      },
     );
     if (!result.error && result.status === 0)
       for (const folder of result.stdout.trim().split(/\r?\n/).filter(Boolean))
