@@ -124,10 +124,23 @@ async function integrationCheck(win, update, native = {}) {
       );
       check('Startup foreground tree stays fully opaque', initial.appearance.opacity === '1');
       report.nativeBackgroundGetter = typeof win.getBackgroundColor === 'function';
+      let nativeBackground;
+      if (report.nativeBackgroundGetter) {
+        try {
+          nativeBackground = win.getBackgroundColor();
+        } catch (error) {
+          // The reviewed Owl runtime exposes this method but deliberately does
+          // not implement it. Rendered alpha/palette/photo checks still apply.
+          if (!/^getBackgroundColor\(\) is not implemented in Owl$/.test(error.message))
+            throw error;
+          report.nativeBackgroundGetter = false;
+          report.nativeBackgroundGetterUnavailable = 'Not implemented by the native runtime';
+        }
+      }
       if (report.nativeBackgroundGetter)
         check(
           'Styled native window background is transparent',
-          nativeColor(win.getBackgroundColor()) === '#00000000',
+          nativeColor(nativeBackground) === '#00000000',
         );
       const shot = await win.webContents.capturePage();
       fs.mkdirSync(OUTPUT, { recursive: true, mode: 0o700 });
