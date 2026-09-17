@@ -21,6 +21,7 @@ assets/themes/catalog.json
 assets/themes/night-shift.jpg
 assets/themes/workbench.jpg
 compatibility.json
+docs/NATIVE-PORT.md
 desktop/main.cjs
 desktop/package-lock.json
 desktop/package.json

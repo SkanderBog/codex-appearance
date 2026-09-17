@@ -9,9 +9,10 @@ GUI self-tests exercise actual controls, drag-and-drop image import, resizing, a
 ## 0.5.0-alpha.1 desktop and sign-in checks (2026-09-17)
 
 - All 24 Node and 21 Python regression tests passed locally, including native Node/Python storage agreement, standalone startup without Codex metadata, and deterministic source ZIP contents.
-- The standalone editor ran locally with official Electron 44.4.1, independent of a Codex installation or account. Graphical checks cover the existing appearance workflows and blocking unsupported styled-Codex launch in both the UI and IPC.
+- The standalone editor ran locally with official Electron 44.4.1, independent of a Codex installation or account. All 57 graphical checks passed, covering the existing appearance workflows and blocking unsupported styled-Codex launch in both the UI and IPC.
 - A new empty authentication directory with file-backed credential storage and a separate Codex UI profile passed six signed-out checks: visible login control, applied styling, reachable sign-in, successful layout validation, No look cleanup, and reachable sign-in after restoration. The existing account was untouched; no prompts were sent.
-- Native CI runs the Node suite, photo decoding tests, and the standalone graphical suite on macOS 14 and Windows Server 2022 with Node 22, Python 3.12, and pinned Electron 44.4.1. Native run results are recorded after verification below.
+- Native CI runs the Node suite, photo decoding tests, and the standalone graphical suite on macOS 14 and Windows Server 2022 with Node 22, Python 3.12, and pinned Electron 44.4.1. All four jobs passed in [the native validation run](https://github.com/SkanderBog/codex-appearance/actions/runs/35226314358): both native editors passed all 57 graphical assertions, 24 Node tests and five Python image tests.
+- The fresh Linux source archive, extracted into a path with spaces, passed all 54 editor and 26 real-Codex integration assertions. Signed-out checks use a separate empty authentication store; ordinary integration checks share Codex account services but never send prompts.
 - The Mac/Windows packages are source previews requiring local dependency installation, not signed/notarized installers. Native Codex injection, native palette import acceptance, physical-device compositing, native file-picker interaction, Mac Intel, and Windows ARM64 remain unverified.
 
 ## 0.4.0-alpha.3 No look checks (2026-09-17)

@@ -34,6 +34,8 @@ The native editor shares the existing interface and portable look format. It use
 
 macOS and Windows Codex injection is a separate, unfinished port. Their app bundles, signatures, archive integrity, and internal window layout need build-specific review and tests. These previews do not modify Codex or bypass signature checks.
 
+See the [native port and tester plan](docs/NATIVE-PORT.md) for the remaining one-click packaging work, integration requirements, and what testers should report.
+
 ## Try the macOS or Windows editor preview
 
 These are source packages, not signed application installers. Install Node.js 22.12+ and Python 3.10+ first. Download the matching `macos-editor-preview.zip` or `windows-editor-preview.zip` plus `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases), compare the archive's SHA-256 with the matching checksum line, then extract it. Use `shasum -a 256 <archive>` on Mac or `Get-FileHash <archive> -Algorithm SHA256` in PowerShell.

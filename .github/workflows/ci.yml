@@ -64,8 +64,12 @@ jobs:
       - run: node --test test/*.test.cjs
       - run: python -m unittest discover -s test -p test_photos.py
       - run: npm ci --prefix desktop
-      - name: Native standalone graphical checks
-        run: node scripts/start-desktop.cjs self-test
+      - name: macOS launcher and graphical checks
+        if: runner.os == 'macOS'
+        run: bash launch-macos.command self-test
+      - name: Windows launcher and graphical checks
+        if: runner.os == 'Windows'
+        run: .\launch-windows.cmd self-test
       - name: Show local-fixture test summary
         if: always()
         run: python -c "import json,os,pathlib; p=pathlib.Path(os.environ['COMPANION_OUTPUT_DIR'])/'self-test-report.json'; print(p.read_text() if p.exists() else 'No graphical report was produced')"
