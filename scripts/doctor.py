@@ -30,7 +30,7 @@ def checks(headless=False):
     except ValueError as error:
         record('Storage configuration', False, str(error))
     try:
-        _, version, _, _ = compatibility()
+        _, version, _, _, _ = compatibility(adaptive=os.environ.get('COMPANION_ADAPTIVE') == '1')
         record('Codex', True, f'Compatible build {version}.')
     except (OSError, ValueError, KeyError, TypeError):
         record('Codex', False, 'Missing or unsupported build. See compatibility.json and COMPANION_CODEX_INSTALL in README.md.')

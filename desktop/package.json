@@ -1,6 +1,6 @@
 {
   "name": "codex-appearance-desktop-runtime",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "private": true,
   "description": "Optional standalone editor runtime; does not modify Codex",
   "license": "MIT",

@@ -18,6 +18,22 @@ import prepare
 import release
 
 
+def nested_asar(destination, files):
+    header = {'files': {}}
+    offset = 0
+    for name, data in files.items():
+        parts = name.split('/')
+        node = header['files']
+        for part in parts[:-1]:
+            node = node.setdefault(part, {'files': {}})['files']
+        node[parts[-1]] = {'size': len(data), 'offset': str(offset)}
+        offset += len(data)
+    with open(destination, 'wb') as stream:
+        prepare.write_header(stream, header)
+        for data in files.values():
+            stream.write(data)
+
+
 class PublicReleaseTests(unittest.TestCase):
     def test_paths_match_javascript_with_spaces(self):
         with tempfile.TemporaryDirectory(prefix='appearance space ') as folder:
@@ -54,6 +70,22 @@ class PublicReleaseTests(unittest.TestCase):
                 prepare.compatibility(install)
             self.assertEqual(source.read_bytes(), before)
             self.assertFalse((install / '.runtime').exists())
+
+    def test_adaptive_linux_compatibility_discovers_browser_window_constructor(self):
+        with tempfile.TemporaryDirectory() as folder:
+            install = Path(folder); (install / 'resources').mkdir()
+            (install / 'ChatGPT').write_bytes(b'fixture'); (install / 'ChatGPT').chmod(0o755)
+            source = install / 'resources/app.asar'
+            nested_asar(source, {
+                'package.json': json.dumps({'version': '99.0.0', 'main': '.vite/build/main-example.js'}).encode(),
+                '.vite/build/main-example.js': b'new Example.BrowserWindow({});',
+            })
+            before = source.read_bytes()
+            result = prepare.compatibility(install, adaptive=True)
+            self.assertEqual(result[1], '99.0.0')
+            self.assertEqual(result[2], '.vite/build/main-example.js')
+            self.assertTrue(result[4])
+            self.assertEqual(source.read_bytes(), before)
 
     def test_release_manifest_excludes_private_data_and_archive_is_reproducible(self):
         with tempfile.TemporaryDirectory() as folder:

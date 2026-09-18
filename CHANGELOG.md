@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0-alpha.2
+
+- Add an opt-in `COMPANION_ADAPTIVE=1` mode that inspects the selected Codex archive and recognizes structurally similar builds instead of requiring a hardcoded compatibility entry.
+- Keep reviewed-build compatibility checks as the default behavior for Linux, Mac Apple Silicon, and Windows x64.
+- Dynamically discover the native main bundle and early-bootstrap entry for adaptive inspection and fingerprint reporting.
+- Dynamically discover the Linux BrowserWindow constructor when adaptive mode is enabled.
+- Add regression tests for native and Linux adaptive compatibility discovery.
+
 ## 0.6.0-alpha.1
 
 - Add self-contained Mac Apple Silicon application and Windows x64 executable prototypes; bundle Electron and the image decoder so users need no development tools.

@@ -12,6 +12,48 @@ const {
 } = require('../src/inspector-client.cjs');
 const { childEndpoint, bootstrap } = require('../src/native-launch.cjs');
 const { readEntry, inspectInstall } = require('../src/native-install.cjs');
+function writeTinyAsar(destination, files) {
+  const header = { files: {} };
+  let offset = 0;
+  for (const [name, data] of files) {
+    const parts = name.split('/');
+    let node = header.files;
+    for (const part of parts.slice(0, -1)) {
+      if (!node[part] || typeof node[part] !== 'object' || !node[part].files)
+        node[part] = { files: {} };
+      node = node[part].files;
+    }
+    node[parts.at(-1)] = { size: data.length, offset: String(offset) };
+    offset += data.length;
+  }
+  const json = Buffer.from(JSON.stringify(header));
+  const padding = Buffer.alloc((4 - (json.length % 4)) % 4);
+  const headerSize = 8 + json.length + padding.length;
+  const prefix = Buffer.alloc(16);
+  prefix.writeUInt32LE(4, 0);
+  prefix.writeUInt32LE(headerSize, 4);
+  prefix.writeUInt32LE(headerSize - 4, 8);
+  prefix.writeUInt32LE(json.length, 12);
+  fs.writeFileSync(
+    destination,
+    Buffer.concat([prefix, json, padding, ...files.map(([, data]) => data)]),
+  );
+}
+function nativeFixture() {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'appearance-native-fixture-'));
+  fs.mkdirSync(path.join(directory, 'resources'));
+  fs.writeFileSync(path.join(directory, 'ChatGPT.exe'), 'fixture');
+  const archive = path.join(directory, 'resources', 'app.asar');
+  writeTinyAsar(archive, [
+    [
+      'package.json',
+      Buffer.from(JSON.stringify({ version: '99.0.0', main: '.vite/build/early-bootstrap.js' })),
+    ],
+    ['.vite/build/main-example.js', Buffer.from('new Example.BrowserWindow({});')],
+    ['.vite/build/early-bootstrap.js', Buffer.from('require("electron");')],
+  ]);
+  return { directory, archive };
+}
 test('Native inspector accepts only exact local owned-process endpoints', () => {
   assert.equal(inspectorEndpoint('ws://127.0.0.1:9230/abc-def').port, '9230');
   for (const endpoint of [
@@ -22,6 +64,22 @@ test('Native inspector accepts only exact local owned-process endpoints', () => 
     'ws://127.0.0.1:9230/a?token=secret',
   ])
     assert.throws(() => inspectorEndpoint(endpoint));
+});
+test('Adaptive native inspection reads version and fingerprints without modifying the archive', () => {
+  const { directory, archive } = nativeFixture();
+  try {
+    const before = fs.readFileSync(archive);
+    const install = inspectInstall(directory, 'win32', 'x64', { adaptive: true });
+    assert.equal(install.version, '99.0.0');
+    assert.equal(install.main, '.vite/build/main-example.js');
+    assert.equal(install.adaptive, true);
+    assert.match(install.mainSha256, /^[0-9a-f]{64}$/);
+    assert.notEqual(install.mainSha256, install.earlyBootstrapSha256);
+    assert.deepEqual(fs.readFileSync(archive), before);
+    assert.throws(() => inspectInstall(directory, 'win32', 'x64', { adaptive: false }));
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });
 test('Read-only archive reader rejects malformed archive without modifying it', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'appearance-native-'));

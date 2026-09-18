@@ -1,6 +1,6 @@
 # Native prototype and tester plan
 
-Version 0.6.0-alpha.1 adds a self-contained Mac Apple Silicon application and Windows x64 executable. Opening the companion automatically opens a reviewed installed Codex with the saved appearance. The editor runtime and image decoder are bundled; testers do not need Node, Python or npm.
+Version 0.6.0-alpha.2 keeps the reviewed-build safety check as the default and adds an opt-in adaptive inspection mode for nearby native Codex builds. The self-contained Mac Apple Silicon application and Windows x64 executable still open a reviewed installed Codex with the saved appearance, and the editor runtime and image decoder remain bundled; testers do not need Node, Python or npm.
 
 ## Current compatibility
 
@@ -10,6 +10,8 @@ Version 0.6.0-alpha.1 adds a self-contained Mac Apple Silicon application and Wi
 | Windows x64 | 26.908.70816                  |
 
 The launcher verifies main-process and startup code fingerprints, not just the visible version number. Updated or unsupported builds are rejected before launch. No Intel Mac or Windows ARM64 integration is claimed.
+
+For local testing only, `COMPANION_ADAPTIVE=1` makes the native launcher inspect the selected Codex archive directly and skip the reviewed-build allowlist. It still validates the archive and main entry, and the existing startup/integration checks still run. This is useful for seeing whether a nearby Codex build works before adding it to `native-compatibility.json`; it does not guarantee compatibility.
 
 The native launcher uses the reviewed app's enabled startup inspector on an ephemeral loopback port, loads the local appearance hook before application startup, resumes, and closes/verifies that inspector. It preserves the installed files, signatures and security fuses. It does not patch a signed application on disk or enable a disabled debugging capability. Native traffic lights/window controls remain in place; No look restores backgrounds and native vibrancy/material.
 

@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import struct
 
@@ -114,8 +115,8 @@ def tiny_asar(destination, files):
     temporary.replace(destination)
 
 
-def compatibility(install=INSTALL):
-    """Reject unreviewed builds before creating or modifying a runtime copy."""
+def compatibility(install=INSTALL, adaptive=False):
+    """Return the inspected entry point, or reject builds before modifying a runtime copy."""
     supported = json.loads((ROOT / 'compatibility.json').read_text())
     if platform.system().lower() != supported['platform'] or platform.machine() != supported['architecture']:
         raise ValueError('This alpha supports Linux x86_64 only.')
@@ -124,8 +125,12 @@ def compatibility(install=INSTALL):
         raise ValueError('Compatible Codex installation not found. Set COMPANION_CODEX_INSTALL to its directory.')
     package = json.loads(read_entry(source, 'package.json'))
     version = package.get('version')
+    if not isinstance(version, str) or not re.fullmatch(
+        r'[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:[-+][0-9A-Za-z.-]+)?', version
+    ):
+        raise ValueError(f'Unsupported Codex package version {version!r}. No patch was applied.')
     expected = supported['builds'].get(version)
-    if not expected:
+    if not adaptive and not expected:
         raise ValueError(f'Unsupported Codex build {version!r}. Supported: {", ".join(supported["builds"])}. No patch was applied.')
     header, _ = read_header(source)
     builds = header['files']['.vite']['files']['build']['files']
@@ -134,10 +139,15 @@ def compatibility(install=INSTALL):
         raise ValueError('Unfamiliar Codex entry point. No patch was applied.')
     main_path = '.vite/build/' + candidates[0]
     contents = read_entry(source, main_path)
+    pattern = re.compile(rb'new\s+[A-Za-z_$][A-Za-z0-9_$]*\s*\.\s*BrowserWindow\s*\(')
+    if adaptive:
+        if not pattern.search(contents):
+            raise ValueError('This Codex entry point does not expose a recognizable BrowserWindow constructor. No patch was applied.')
+        return source, version, main_path, contents, True
     if (hashlib.sha256(contents).hexdigest() != expected['mainSha256']
             or contents.count(b'new l.BrowserWindow(') != expected['windowConstructors']):
         raise ValueError('Codex build fingerprint does not match the tested integration. No patch was applied.')
-    return source, version, main_path, contents
+    return source, version, main_path, contents, False
 
 
 def link(source, destination):
@@ -151,16 +161,17 @@ def link(source, destination):
 
 
 def prepare():
-    source, version, main_path, contents = compatibility()
+    adaptive = os.environ.get('COMPANION_ADAPTIVE') == '1'
+    source, version, main_path, contents, adaptive = compatibility(adaptive=adaptive)
     _, runtime, _ = storage_paths()
     runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
     with open(runtime / 'prepare.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        _prepare_locked(runtime, source, version, main_path, contents)
+        _prepare_locked(runtime, source, version, main_path, contents, adaptive)
     print('Private runtime ready; installed Codex files are unchanged.')
 
 
-def _prepare_locked(runtime, source, version, main_path, contents):
+def _prepare_locked(runtime, source, version, main_path, contents, adaptive=False):
     binary = runtime / 'ChatGPT'
     installed = INSTALL / 'ChatGPT'
     if (not binary.exists() or binary.stat().st_size != installed.stat().st_size
@@ -190,14 +201,21 @@ def _prepare_locked(runtime, source, version, main_path, contents):
     })
     metadata_path = runtime / 'source.json'
     fingerprint = {'path': str(source), 'size': source.stat().st_size, 'mtime': source.stat().st_mtime_ns,
-                   'hook': str(ROOT / 'src/codex-hook.cjs'), 'patchVersion': 4}
+                   'hook': str(ROOT / 'src/codex-hook.cjs'), 'patchVersion': 4, 'adaptive': adaptive}
     try:
         prior = json.loads(metadata_path.read_text())
     except (OSError, ValueError):
         prior = {}
     if prior.get('source') != fingerprint or not (runtime / 'codex/resources/app.asar').exists():
         constructor = ('new (require(' + json.dumps(str(ROOT / 'src/codex-hook.cjs')) + ').StyledWindow)(').encode()
-        changes = {main_path: contents.replace(b'new l.BrowserWindow(', constructor)}
+        if adaptive:
+            pattern = re.compile(rb'new\s+[A-Za-z_$][A-Za-z0-9_$]*\s*\.\s*BrowserWindow\s*\(')
+            changed, count = pattern.subn(lambda _match: constructor, contents)
+            if count == 0:
+                raise ValueError('Adaptive Codex preparation found no BrowserWindow constructors to patch.')
+        else:
+            changed = contents.replace(b'new l.BrowserWindow(', constructor)
+        changes = {main_path: changed}
         patch_asar(source, runtime / 'codex/resources/app.asar', ROOT / 'src/codex-hook.cjs', changes)
         temporary = metadata_path.with_suffix('.tmp')
         temporary.write_text(json.dumps({'source': fingerprint, 'version': version}, indent=2))

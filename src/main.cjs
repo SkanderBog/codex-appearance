@@ -365,7 +365,9 @@ handle('appearance:locate-codex', async () => {
       : {}),
   });
   if (result.canceled || !result.filePaths.length) return null;
-  require('./native-install.cjs').rememberInstall(result.filePaths[0]);
+  require('./native-install.cjs').rememberInstall(result.filePaths[0], {
+    adaptive: process.env.COMPANION_ADAPTIVE === '1',
+  });
   return launchCodex();
 });
 ipcMain.on('appearance:window', (event, action) => {

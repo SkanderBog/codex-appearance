@@ -1,6 +1,6 @@
 {
   "name": "codex-appearance-companion",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "private": true,
   "description": "Unofficial Codex appearance companion with experimental standalone desktop editors",
   "scripts": {

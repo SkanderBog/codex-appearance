@@ -2,7 +2,7 @@
 
 An unofficial appearance companion for compatible Codex desktop installations: local photo backgrounds, three included scenic looks, translucent backgrounds with opaque text, sixteen palettes, typography controls, and a sidebar you can reveal when needed.
 
-**Experimental release: `0.6.0-alpha.1`.** Linux retains its existing integration. Mac Apple Silicon and Windows x64 now have packaged prototypes that open a reviewed native Codex installation with saved styling. Compatibility is build-specific; unsupported builds stop without changing installation files. Physical-device testing remains necessary. This project is not affiliated with or endorsed by OpenAI.
+**Experimental release: `0.6.0-alpha.2`.** Linux retains its existing integration. Mac Apple Silicon and Windows x64 have packaged prototypes that open a reviewed native Codex installation with saved styling. Compatibility is build-specific by default; an opt-in adaptive mode can inspect nearby builds before applying styles. Physical-device testing remains necessary. This project is not affiliated with or endorsed by OpenAI.
 
 ## Screenshots
 
@@ -37,6 +37,27 @@ The companion retains native Mac traffic lights and Windows window controls. **L
 
 See the [native tester plan](docs/NATIVE-PORT.md) for compatibility, architecture coverage and reporting instructions.
 
+## Experimental adaptive compatibility
+
+Reviewed-build checking remains the default. For development or local testing, `COMPANION_ADAPTIVE=1` changes the launcher to inspect the installed Codex archive directly instead of requiring an entry in `compatibility.json` or `native-compatibility.json`. It reads the package version and main entry, validates the archive structure, and for Linux confirms that the entry contains a recognizable `BrowserWindow` constructor before making a private runtime copy.
+
+This mode can help nearby Codex versions work without editing the compatibility files first, but it is not a promise that every version will work. Codex may change its window construction, startup inspector, security fuses, or screen layout in ways that still require code changes. The existing startup, layout, and integration checks still run, and an unsupported structure still stops without changing installed Codex files.
+
+On Linux source runs:
+
+```sh
+COMPANION_ADAPTIVE=1 ./launch.sh
+```
+
+For the packaged Windows native prototype, set the same environment variable before opening the application:
+
+```powershell
+$env:COMPANION_ADAPTIVE = "1"
+.\Codex Appearance.exe
+```
+
+Remove the variable afterward to return to reviewed-build-only behavior.
+
 ## Open a native prototype
 
 1. Install a compatible official Codex desktop build. The prototype does not include or install Codex. Do not downgrade a working installation just for this experiment; report an unsupported version so it can be reviewed.
@@ -69,13 +90,13 @@ Native settings, photos, saved looks and editor profiles live in `~/Library/Appl
 
 ## Try the Linux integration alpha
 
-1. Download `codex-appearance-0.6.0-alpha.1-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
+1. Download `codex-appearance-0.6.0-alpha.2-linux-x64.tar.gz` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/SkanderBog/codex-appearance/releases).
 2. Verify and extract the download:
 
    ```sh
    sha256sum --ignore-missing -c SHA256SUMS.txt
-   tar -xzf codex-appearance-0.6.0-alpha.1-linux-x64.tar.gz
-   cd codex-appearance-0.6.0-alpha.1-linux-x64
+   tar -xzf codex-appearance-0.6.0-alpha.2-linux-x64.tar.gz
+   cd codex-appearance-0.6.0-alpha.2-linux-x64
    ```
 
 3. On Ubuntu/Debian, install the small system dependencies if missing:

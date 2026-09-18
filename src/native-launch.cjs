@@ -85,7 +85,9 @@ async function launchNative({ smoke = false, install, spawnImpl = spawn, signal 
     if (existing) return existing;
   }
   if (signal?.aborted) throw new Error('Native startup was cancelled.');
-  install ||= discoverInstall();
+  install ||= discoverInstall(process.platform, {
+    adaptive: process.env.COMPANION_ADAPTIVE === '1',
+  });
   const profile = path.join(STATE, smoke ? 'native-smoke-profile' : 'native-codex-profile');
   fs.mkdirSync(profile, { recursive: true, mode: 0o700 });
   const env = {
