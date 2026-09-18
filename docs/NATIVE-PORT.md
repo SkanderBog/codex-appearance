@@ -6,7 +6,7 @@ Version 0.6.0-alpha.2 keeps the reviewed-build safety check as the default and a
 
 | Prototype   | Reviewed native Codex version |
 | ----------- | ----------------------------- |
-| macOS ARM64 | 26.911.61220                  |
+| macOS ARM64 | 26.915.31029                  |
 | Windows x64 | 26.908.70816                  |
 
 The launcher verifies main-process and startup code fingerprints, not just the visible version number. Updated or unsupported builds are rejected before launch. No Intel Mac or Windows ARM64 integration is claimed.

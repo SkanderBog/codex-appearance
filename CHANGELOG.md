@@ -6,6 +6,7 @@
 - Keep reviewed-build compatibility checks as the default behavior for Linux, Mac Apple Silicon, and Windows x64.
 - Dynamically discover the native main bundle and early-bootstrap entry for adaptive inspection and fingerprint reporting.
 - Dynamically discover the Linux BrowserWindow constructor when adaptive mode is enabled.
+- Update the reviewed Mac Apple Silicon build to 26.915.31029 after verifying the new official DMG hash and app.asar fingerprints.
 - Add regression tests for native and Linux adaptive compatibility discovery.
 
 ## 0.6.0-alpha.1

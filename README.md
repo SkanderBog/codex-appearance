@@ -25,7 +25,7 @@ Captured from the Linux companion and its floating preview. The sample text and 
 | Edition                          | Edit and preview looks | Open styled Codex                                     |
 | -------------------------------- | ---------------------- | ----------------------------------------------------- |
 | Linux x86_64 source              | Yes                    | Reviewed 26.901.41123 only                            |
-| Mac ARM64 application prototype  | Yes                    | Reviewed 26.911.61220 only                            |
+| Mac ARM64 application prototype  | Yes                    | Reviewed 26.915.31029 only                            |
 | Windows x64 executable prototype | Yes                    | Reviewed 26.908.70816 only                            |
 | Native source editor             | Yes                    | Editor-only unless explicitly enabled for development |
 

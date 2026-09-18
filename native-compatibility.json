@@ -1,16 +1,16 @@
 {
   "darwin-arm64": {
-    "version": "26.911.61220",
-    "main": ".vite/build/main-DS3FMq4P.js",
-    "mainSha256": "9f4ce005ae6422a85758fe1d8e8f26e049f85026dc65618f6901fa65b0be35c0",
-    "earlyBootstrapSha256": "d6a71c59c4ea3edd6ae9d11d74579fb811c59f16888938cb5288bef1570bbf6d",
-    "mainConstructorSymbol": "d",
+    "version": "26.915.31029",
+    "main": ".vite/build/main-D_oVe3l_.js",
+    "mainSha256": "372940f7ad2b5f983c14db4ef4dc649003903479d748ae9dea97ba614bd38e11",
+    "earlyBootstrapSha256": "e73cfba3b7c53f9c69b4b29e20eaa31aa5f877138cb88266399d39cc08bff769",
+    "mainConstructorSymbol": "l",
     "constructorCount": 5,
     "fuseWire": "101100011",
     "downloadUrl": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg",
     "bundleIdentifier": "com.openai.codex",
     "executable": "ChatGPT.app/Contents/MacOS/ChatGPT",
-    "fuseBinary": "ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/153.0.8010.36/Codex Framework",
+    "fuseBinary": "ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/153.0.8010.48/Codex Framework",
     "minimumOS": "13.0"
   },
   "win32-x64": {

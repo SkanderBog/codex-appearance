@@ -18,9 +18,9 @@ import zipfile
 PACKAGES = {
     'Darwin-arm64': {
         'url': 'https://persistent.oaistatic.com/codex-app-prod/Codex.dmg',
-        'sha256': '61c33b667b4560e70c94d0c0275e0f408d8ae1c2b1cbf598434d1307af471516',
+        'sha256': 'f8c488f498305bb4d71bf1d8c60d096c38a9a9c59f1d511553d04a2bd9b67689',
         'filename': 'reviewed-codex.dmg',
-        'version': '26.911.61220',
+        'version': '26.915.31029',
     },
     'Windows-AMD64': {
         'url': 'https://persistent.oaistatic.com/codex-app-prod/ChatGPT-x64.msix',
